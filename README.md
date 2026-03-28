@@ -51,9 +51,9 @@ docker-compose up --build -d spark-consumer dashboard producer
 
 ```mermaid
 graph TD
-    classDef tech fill:#0F172A,stroke:#3B82F6,stroke-width:2px,color:#fff;
-    classDef db fill:#10B981,stroke:#047857,stroke-width:2px,color:#fff;
-    classDef ui fill:#F97316,stroke:#C2410C,stroke-width:2px,color:#fff;
+    classDef tech fill:#A7C7E7,stroke:#6495ED,stroke-width:2px,color:#333,rx:10,ry:10;
+    classDef db fill:#C1E1C1,stroke:#98FF98,stroke-width:2px,color:#333,rx:10,ry:10;
+    classDef ui fill:#FFD1DC,stroke:#FFB6C1,stroke-width:2px,color:#333,rx:10,ry:10;
 
     A[paysim.csv] -->|Python Script| B(Kafka Producer):::tech
     B -->|Streams JSON| C{Kafka Cluster\n& Zookeeper}:::tech
