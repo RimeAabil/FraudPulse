@@ -7,7 +7,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY dashboard.py .
+COPY . .
 
 RUN mkdir -p .streamlit && \
     echo '[theme]\nprimaryColor="#FF4B4B"\nbackgroundColor="#0E1117"\nsecondaryBackgroundColor="#262730"\ntextColor="#FAFAFA"\nfont="sans serif"' > .streamlit/config.toml && \
