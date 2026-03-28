@@ -346,165 +346,118 @@ if df.empty:
 
 df['processed_at'] = pd.to_datetime(df['processed_at'])
 
-# SIDEBAR
-st.sidebar.title("🛡️ FraudPulse")
-st.sidebar.markdown("Real-time fraud detection engine.")
+# ── NAVIGATION SYSTEM ──
+with st.sidebar:
+    st.markdown("### 🧭 Navigation")
+    page = st.radio("Go to:", ["Overview", "Deep Analytics", "Forensic Alerts"], label_visibility="collapsed")
+    st.markdown("---")
+    
+    st.subheader("Pipeline Status")
+    st.metric("MongoDB Docs", f"{total_docs:,}")
+    recent_time = df['processed_at'].max().strftime("%H:%M:%S")
+    st.metric("Latest Update", recent_time)
+    
+    st.markdown("---")
+    st.subheader("Global Filters")
+    selected_types = st.multiselect("Tx Type", options=df['type'].unique(), default=df['type'].unique())
+    selected_risk = st.multiselect("Risk Level", options=df['risk_level'].unique(), default=df['risk_level'].unique())
+    
+    max_amt = float(df['amount'].max())
+    if max_amt <= 0: max_amt = 1000.0
+    selected_amount = st.slider("Min Amount ($)", 0.0, max_amt, 0.0)
 
-st.sidebar.subheader("Pipeline Status")
-st.sidebar.metric("MongoDB Docs", f"{total_docs:,}")
-st.sidebar.metric("Latest Update", df['processed_at'].max().strftime("%H:%M:%S"))
-
-st.sidebar.subheader("Filters")
-selected_types = st.sidebar.multiselect("Transaction Type", options=df['type'].unique(), default=df['type'].unique())
-selected_risk = st.sidebar.multiselect("Risk Level", options=df['risk_level'].unique(), default=df['risk_level'].unique())
-
-min_amt = float(df['amount'].min())
-max_amt = float(df['amount'].max())
-if max_amt <= 0.0:
-    max_amt = 1000.0  # Safe default if all amounts are zero
-selected_amount = st.sidebar.slider("Min Amount ($)", min_value=0.0, max_value=max_amt, value=0.0)
-
-min_step = int(df['step'].min())
-max_step = int(df['step'].max())
-if max_step <= min_step:
-    max_step = min_step + 1  # Slider requires max > min
-selected_step = st.sidebar.slider("Step Range", min_value=min_step, max_value=max_step, value=(min_step, max_step))
-
+# Filter Data
 filtered_df = df[
     (df['type'].isin(selected_types)) &
     (df['risk_level'].isin(selected_risk)) &
-    (df['amount'] >= selected_amount) &
-    (df['step'] >= selected_step[0]) &
-    (df['step'] <= selected_step[1])
+    (df['amount'] >= selected_amount)
 ]
 
-# KPI SECTION
-st.markdown("""
-<div class="section-header">
-  <span class="dot"></span>Executive Summary
-</div>
-""", unsafe_allow_html=True)
+# ── PAGE ROUTING ──
+if page == "Overview":
+    st.markdown('<div class="section-header"><span class="dot"></span>Executive Summary</div>', unsafe_allow_html=True)
+    
+    kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+    total_txs = len(filtered_df)
+    fraud_txs = len(filtered_df[filtered_df['fraud_flag'] == True])
+    fraud_rate = (fraud_txs / total_txs * 100) if total_txs > 0 else 0
+    total_fraud_amt = filtered_df[filtered_df['fraud_flag'] == True]['amount'].sum()
+    avg_prob = filtered_df['fraud_probability'].mean() if total_txs > 0 else 0
 
-kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+    kpi1.metric("Total Transactions", f"{total_txs:,}")
+    kpi2.metric("Fraud Rate %", f"{fraud_rate:.2f}%")
+    kpi3.metric("Fraudulent Volume", f"${total_fraud_amt:,.2f}")
+    kpi4.metric("Avg Risk Score", f"{avg_prob:.4f}")
 
-total_txs = len(filtered_df)
-fraud_txs = len(filtered_df[filtered_df['fraud_flag'] == True])
-fraud_rate = (fraud_txs / total_txs * 100) if total_txs > 0 else 0
-total_fraud_amt = filtered_df[filtered_df['fraud_flag'] == True]['amount'].sum()
-avg_prob = filtered_df['fraud_probability'].mean() if total_txs > 0 else 0
-
-# Calculating real deltas based on the last 5 minutes of data
-five_mins_ago = df['processed_at'].max() - pd.Timedelta(minutes=5)
-recent_df = filtered_df[filtered_df['processed_at'] >= five_mins_ago]
-recent_total_txs = len(recent_df)
-recent_fraud_txs = len(recent_df[recent_df['fraud_flag'] == True])
-recent_fraud_rate = (recent_fraud_txs / recent_total_txs * 100) if recent_total_txs > 0 else 0
-
-kpi1.metric("Total Transactions", f"{total_txs:,}", delta=f"{recent_total_txs} last 5m")
-kpi2.metric("Fraud Rate %", f"{fraud_rate:.2f}%", delta=f"{recent_fraud_rate:.2f}% last 5m")
-kpi3.metric("Total Fraudulent Amount", f"${total_fraud_amt:,.2f}")
-kpi4.metric("Avg Fraud Probability", f"{avg_prob:.4f}")
-
-st.markdown("<div style='margin-top:2rem'></div>", unsafe_allow_html=True)
-
-# DEEP ANALYTICS SECTION
-st.markdown("""
-<div class="section-header">
-  <span class="dot"></span>Deep Analytics Deep Dive
-</div>
-""", unsafe_allow_html=True)
-
-tab1, tab2 = st.tabs(["📊 Transaction Dynamics", "🔍 Risk Profiling"])
-
-with tab1:
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown("##### Tx Volume vs Fraud Count by Step")
+    st.markdown("---")
+    colA, colB = st.columns([2, 1])
+    with colA:
+        st.markdown("##### Transaction Velocity vs Fraud")
         fig1 = hc.create_step_volume_chart(filtered_df)
         st.plotly_chart(fig1, use_container_width=True)
-    with col2:
-        st.markdown("##### Fraud Rate by Transaction Type")
-        fig3 = hc.create_type_rate_chart(filtered_df)
-        st.plotly_chart(fig3, use_container_width=True)
+    with colB:
+        st.markdown("##### Risk Distribution")
+        fig5 = hc.create_risk_pie_chart(filtered_df)
+        st.plotly_chart(fig5, use_container_width=True)
 
-with tab2:
-    col3, col4 = st.columns(2)
-    with col3:
-        st.markdown("##### Fraud Probability Distribution")
-        fig2 = hc.create_fraud_prob_chart(filtered_df)
-        st.plotly_chart(fig2, use_container_width=True)
-    with col4:
-        st.markdown("##### Avg Fraudulent Amount by Type")
-        fig4 = hc.create_type_amt_chart(filtered_df)
-        if fig4:
-            st.plotly_chart(fig4, use_container_width=True)
-        else:
-            st.info("No fraudulent transactions found.")
+elif page == "Deep Analytics":
+    st.markdown('<div class="section-header"><span class="dot"></span>Behavioral Analytics</div>', unsafe_allow_html=True)
+    
+    tab1, tab2 = st.tabs(["Type Analysis", "Probability Models"])
+    
+    with tab1:
+        c1, c2 = st.columns(2)
+        with c1:
+            st.markdown("##### Fraud Rate per Category")
+            st.plotly_chart(hc.create_type_rate_chart(filtered_df), use_container_width=True)
+        with c2:
+            st.markdown("##### Avg Loss per Category")
+            fig4 = hc.create_type_amt_chart(filtered_df)
+            if fig4: st.plotly_chart(fig4, use_container_width=True)
+            else: st.info("No frauds in this segment.")
+            
+    with tab2:
+        c3, c4 = st.columns(2)
+        with c3:
+            st.markdown("##### Model Detection Confidence")
+            st.plotly_chart(hc.create_fraud_prob_chart(filtered_df), use_container_width=True)
+        with c4:
+            st.markdown("##### Detection Engine Overlap")
+            fig6 = hc.create_overlap_chart(filtered_df)
+            if fig6: st.plotly_chart(fig6, use_container_width=True)
+            else: st.info("No data.")
 
-# ADDITIONAL ANALYTICS ROW
-col5, col6, col7 = st.columns(3)
-with col5:
-    st.markdown("##### Risk Level Distribution")
-    fig5 = hc.create_risk_pie_chart(filtered_df)
-    st.plotly_chart(fig5, use_container_width=True)
-with col6:
-    st.markdown("##### Model vs Rule Engine Overlap")
-    fig6 = hc.create_overlap_chart(filtered_df)
-    if fig6:
-        st.plotly_chart(fig6, use_container_width=True)
+    st.markdown("---")
+    st.markdown("#####  Balance Drain Correlation")
+    st.plotly_chart(hc.create_origin_scatter_chart(filtered_df), use_container_width=True)
+
+elif page == " Forensic Alerts":
+    st.markdown('<div class="section-header alert-header"><span class="dot"></span>Real-Time Threat Intelligence</div>', unsafe_allow_html=True)
+    
+    fraud_feed = df[df['fraud_flag'] == True].sort_values('processed_at', ascending=False).head(50).copy()
+    
+    if not fraud_feed.empty:
+        # Pre-process for beautiful display
+        fraud_feed['Status'] = fraud_feed['risk_level'].apply(lambda x: f"🔴 CRITICAL" if x == 'HIGH' else f"🟡 WARNING")
+        fraud_feed['Engine'] = fraud_feed.apply(lambda r: " Model" if r.model_flag and r.rule_triggered=='None' else " Combined" if r.model_flag else " Rules", axis=1)
+        
+        display_cols = ['processed_at', 'Status', 'type', 'amount', 'nameOrig', 'fraud_probability', 'Engine']
+        display_df = fraud_feed[display_cols].rename(columns={
+            'processed_at': 'Timestamp', 'nameOrig': 'SourceID', 'fraud_probability': 'Score', 'amount': 'Amount'
+        })
+
+        def style_rows(row):
+            if "CRITICAL" in str(row.Status):
+                return ['background-color: rgba(239, 68, 68, 0.08); color: #991B1B; font-weight: 600'] * len(row)
+            return ['color: #1E293B'] * len(row)
+
+        st.dataframe(
+            display_df.style.apply(style_rows, axis=1).format({"Amount": "${:,.2f}", "Score": "{:.4f}"}),
+            use_container_width=True, height=600
+        )
     else:
-        st.info("No frauds detected.")
-with col7:
-    st.markdown("##### Balance Drain (Origin)")
-    fig7 = hc.create_origin_scatter_chart(filtered_df)
-    st.plotly_chart(fig7, use_container_width=True)
+        st.success("No active threats detected in the current stream.")
 
-# FORENSIC ALERT FEED SECTION
-st.markdown("<div style='margin-top:2rem'></div>", unsafe_allow_html=True)
-st.markdown("""
-<div class="section-header alert-header">
-  <span class="dot"></span>Forensic Alert Feed
-</div>
-""", unsafe_allow_html=True)
-
-# Filter for recent frauds and make table more comprehensive
-fraud_feed = df[df['fraud_flag'] == True].sort_values('processed_at', ascending=False).head(25).copy()
-
-if not fraud_feed.empty:
-    # Adding emoji indicators for better visual scanning
-    fraud_feed['Risk'] = fraud_feed['risk_level'].apply(lambda x: f"🔴 {x}" if x == 'HIGH' else f"🟡 {x}")
-    fraud_feed['Model'] = fraud_feed['model_flag'].apply(lambda x: "✅" if x else "❌")
-    fraud_feed['Rule'] = fraud_feed['rule_triggered'].apply(lambda x: f"⚠️ {x}" if x != 'None' else "Safe")
-    
-    cols_to_show = ['processed_at', 'Risk', 'type', 'amount', 'nameOrig', 'nameDest', 'fraud_probability', 'Model', 'Rule']
-    
-    # Rename for cleaner headers
-    display_df = fraud_feed[cols_to_show].rename(columns={
-        'processed_at': 'Timestamp',
-        'nameOrig': 'Originator',
-        'nameDest': 'Recipient',
-        'fraud_probability': 'Score',
-        'amount': 'Amount ($)'
-    })
-
-    def highlight_risk(row):
-        style = ['border-bottom:1px solid #E2E8F0'] * len(row)
-        if 'HIGH' in str(row.Risk):
-            style = ['background-color:rgba(239, 68, 68, 0.08); color:#991B1B; font-weight:500; border-bottom:1px solid #FECACA'] * len(row)
-        elif 'MEDIUM' in str(row.Risk):
-            style = ['background-color:rgba(249, 115, 22, 0.05); color:#9A3412; border-bottom:1px solid #FED7AA'] * len(row)
-        return style
-
-    st.dataframe(
-        display_df.style.apply(highlight_risk, axis=1)
-                  .format({"Amount ($)": "{:,.2f}", "Score": "{:.4f}"}),
-        use_container_width=True,
-        height=500,
-    )
-    
-    st.caption("Showing the latest 25 identified fraudulent transactions. Table updates automatically as new streams arrive.")
-else:
-    st.success("System Monitor: No fraudulent transactions detected in the current stream buffer.")
-
+# Footer auto-refresh logic
 time.sleep(10)
 st.rerun()
