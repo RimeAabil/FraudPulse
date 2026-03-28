@@ -47,25 +47,25 @@ def create_step_volume_chart(filtered_df):
     fig = go.Figure()
     fig.add_trace(go.Bar(
         x=step_grouped['step'], y=step_grouped['total'],
-        name='Total Volume', marker_color='#DBEAFE', opacity=1.0,
-        marker_line_width=1, marker_line_color='#93C5FD'
+        name='Total Volume', opacity=1.0,
+        marker=dict(color='#DBEAFE', line=dict(width=1, color='#93C5FD'))
     ))
     fig.add_trace(go.Scatter(
         x=step_grouped['step'], y=step_grouped['fraud'],
         name='Fraud Count', yaxis='y2', mode='lines+markers',
         line=dict(color='#EF4444', width=3),
-        marker=dict(size=7, color='#EF4444', line=dict(width=2, color='white')),
+        marker=dict(size=7, color='#EF4444', line=dict(width=2, color='#FFFFFF')),
     ))
     return apply_layout(fig,
         yaxis=dict(title='Total Volume', gridcolor='#F1F5F9', tickfont=dict(size=11, color='#64748B'), zeroline=False),
-        yaxis2=dict(title='Fraud Count', overlaying='y', side='right', gridcolor='transparent', tickfont=dict(size=11, color='#EF4444'), zeroline=False),
+        yaxis2=dict(title='Fraud Count', overlaying='y', side='right', gridcolor='rgba(0,0,0,0)', tickfont=dict(size=11, color='#EF4444'), zeroline=False),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, bgcolor='rgba(255,255,255,0)', borderwidth=0),
         hovermode="x unified",
     )
 
 def create_fraud_prob_chart(filtered_df):
     fig = px.histogram(filtered_df, x="fraud_probability", nbins=50, color_discrete_sequence=['#3B82F6'])
-    fig.update_traces(marker_line_color='#2563EB', marker_line_width=1, opacity=0.9)
+    fig.update_traces(marker=dict(line=dict(color='#2563EB', width=1)), opacity=0.9)
     return apply_layout(fig)
 
 def create_type_rate_chart(filtered_df):
@@ -73,7 +73,7 @@ def create_type_rate_chart(filtered_df):
     type_grouped['rate'] = type_grouped['frauds'] / type_grouped['txs'] * 100
     fig = px.bar(type_grouped, x='type', y='rate', color='type', text_auto='.2f',
                  color_discrete_sequence=['#2563EB','#3B82F6','#60A5FA','#93C5FD','#EF4444'])
-    fig.update_traces(marker_line_width=0, textfont_size=12, textfont_color='#1E293B', textposition='outside')
+    fig.update_traces(marker=dict(line=dict(width=0)), textfont_size=12, textfont_color='#1E293B', textposition='outside')
     return apply_layout(fig, showlegend=False)
 
 def create_type_amt_chart(filtered_df):
@@ -82,7 +82,7 @@ def create_type_amt_chart(filtered_df):
         return None
     avg_amt_type = fraud_only.groupby('type')['amount'].mean().reset_index()
     fig = px.bar(avg_amt_type, x='type', y='amount', color_discrete_sequence=['#EF4444'], text_auto='.2f')
-    fig.update_traces(marker_line_width=0, textfont_size=12, textfont_color='#1E293B', textposition='outside', opacity=0.9)
+    fig.update_traces(marker=dict(line=dict(width=0)), textfont_size=12, textfont_color='#1E293B', textposition='outside', opacity=0.9)
     return apply_layout(fig)
 
 def create_risk_pie_chart(filtered_df):
@@ -111,7 +111,7 @@ def create_overlap_chart(filtered_df):
     overlap_counts.columns = ['Category', 'Count']
     fig = px.bar(overlap_counts, x='Category', y='Count', color='Category',
                  color_discrete_sequence=['#3B82F6', '#EF4444', '#F97316'])
-    fig.update_traces(marker_line_width=0, opacity=0.9)
+    fig.update_traces(marker=dict(line=dict(width=0)), opacity=0.9)
     return apply_layout(fig, showlegend=False)
 
 def create_origin_scatter_chart(filtered_df):
