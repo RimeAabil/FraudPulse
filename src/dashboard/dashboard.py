@@ -360,10 +360,14 @@ selected_risk = st.sidebar.multiselect("Risk Level", options=df['risk_level'].un
 
 min_amt = float(df['amount'].min())
 max_amt = float(df['amount'].max())
+if max_amt <= 0.0:
+    max_amt = 1000.0  # Safe default if all amounts are zero
 selected_amount = st.sidebar.slider("Min Amount ($)", min_value=0.0, max_value=max_amt, value=0.0)
 
 min_step = int(df['step'].min())
 max_step = int(df['step'].max())
+if max_step <= min_step:
+    max_step = min_step + 1  # Slider requires max > min
 selected_step = st.sidebar.slider("Step Range", min_value=min_step, max_value=max_step, value=(min_step, max_step))
 
 filtered_df = df[
