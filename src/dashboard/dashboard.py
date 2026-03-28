@@ -5,459 +5,294 @@ import time
 from helpers.data_utils import load_data
 import helpers.charts as hc
 
-st.set_page_config(page_title="FraudPulse Dashboard", page_icon="🛡️", layout="wide")
+st.set_page_config(page_title="FraudPulse | Network Integrity", page_icon="🛡️", layout="wide")
 
-# GLOBAL STYLES & ANIMATIONS
+# ── ADVANCED SAAS DESIGN SYSTEM ──
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
-/* ── Root tokens for Light Professional Theme ── */
 :root {
-    --c-bg:          #F8FAFC; /* Clean off-white background */
-    --c-surface:     #FFFFFF; /* White panels */
-    --c-border:      #E2E8F0;
-    --c-blue-dark:   #0F172A; /* For high contrast text/headers */
-    --c-blue-mid:    #2563EB; /* Primary brand blue */
-    --c-blue-light:  #EFF6FF;
-    --c-blue-accent: #3B82F6;
-    --c-red:         #EF4444; /* Alert red */
-    --c-red-light:   #FEF2F2;
-    --c-orange:      #F97316; /* Warning orange */
-    --c-orange-light:#FFF7ED;
-    --c-green:       #10B981; /* Safe green */
-    --c-green-light: #ECFDF5;
-    --c-gray-100:    #F1F5F9;
-    --c-gray-200:    #E2E8F0;
-    --c-gray-400:    #94A3B8;
-    --c-gray-600:    #475569;
-    --c-gray-800:    #1E293B;
-    --c-text:        #0F172A;
-    --c-text-muted:  #64748B;
-    --radius-sm:     8px;
-    --radius-md:     12px;
-    --radius-lg:     16px;
-    --shadow-sm:     0 1px 2px 0 rgba(15, 23, 42, 0.05);
-    --shadow-md:     0 4px 6px -1px rgba(15, 23, 42, 0.05), 0 2px 4px -1px rgba(15, 23, 42, 0.03);
-    --shadow-lg:     0 10px 15px -3px rgba(15, 23, 42, 0.05), 0 4px 6px -2px rgba(15, 23, 42, 0.03);
-    --shadow-hover:  0 14px 24px -4px rgba(15, 23, 42, 0.08), 0 6px 10px -4px rgba(15, 23, 42, 0.04);
-    --font-body:     'Inter', sans-serif;
-    --font-mono:     'JetBrains Mono', monospace;
-    --transition:    all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --brand-primary: #2563EB;
+    --brand-secondary: #475569;
+    --bg-main: #FFFFFF;
+    --bg-subtle: #F8FAFC;
+    --border-color: #E2E8F0;
+    --text-main: #1E293B; /* Elegant Slate Blue */
+    --text-bold: #0F172A;
+    --text-muted: #64748B;
+    --success: #059669;
+    --warning: #D97706;
+    --danger: #DC2626;
 }
 
-/* ── Page background ── */
-html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
-    background: var(--c-bg) !important;
-    font-family: var(--font-body) !important;
-    color: var(--c-text) !important;
+/* Base resets & typography */
+html, body, [data-testid="stAppViewContainer"] {
+    background-color: var(--bg-main) !important;
+    font-family: 'Inter', sans-serif !important;
 }
 
-/* ── Subtle Security Grid & Shield Watermark Background ── */
-[data-testid="stAppViewContainer"]::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-        linear-gradient(rgba(37, 99, 235, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(37, 99, 235, 0.03) 1px, transparent 1px);
-    background-size: 40px 40px;
-    background-position: center center;
-    pointer-events: none;
-    z-index: 0;
+/* High Contrast & Elegance */
+p, span, li, h1, h2, h3, h4, h5, h6, div {
+    color: var(--text-main);
 }
-[data-testid="stAppViewContainer"]::after {
-    content: '🛡️';
-    position: fixed;
-    bottom: -5vh;
-    right: -2vw;
-    font-size: 40vh;
-    opacity: 0.02;
-    pointer-events: none;
-    z-index: 0;
-    transform: rotate(-15deg);
-    filter: grayscale(100%);
+b, strong {
+    color: var(--text-bold);
 }
 
-/* ── Main content area ── */
-[data-testid="stMain"], .main .block-container {
-    background: transparent !important;
-    padding-top: 1.5rem !important;
-    padding-bottom: 3rem !important;
-    position: relative;
-    z-index: 1;
+/* Force Filter Tags to Blue (Professional) */
+[data-baseweb="tag"] {
+    background-color: var(--brand-primary) !important;
+    color: white !important;
+}
+[data-baseweb="tag"] span {
+    color: white !important;
 }
 
-/* ── Sidebar ── */
-[data-testid="stSidebar"] {
-    background: var(--c-surface) !important;
-    border-right: 1px solid var(--c-border) !important;
-    box-shadow: var(--shadow-md) !important;
-}
-[data-testid="stSidebar"] * {
-    color: var(--c-text) !important;
-    font-family: var(--font-body) !important;
-}
-[data-testid="stSidebar"] .stMetric {
-    background: var(--c-gray-100) !important;
-    border: 1px solid var(--c-border) !important;
-    border-radius: var(--radius-md) !important;
-    padding: 12px 16px !important;
-    margin-bottom: 12px !important;
-    transition: var(--transition) !important;
-}
-[data-testid="stSidebar"] .stMetric:hover {
-    background: var(--c-surface) !important;
-    transform: translateX(4px);
-    box-shadow: var(--shadow-sm);
-    border-color: var(--c-blue-accent) !important;
-}
-[data-testid="stSidebar"] label,
-[data-testid="stSidebar"] .stSelectbox label,
-[data-testid="stSidebar"] .stMultiSelect label,
-[data-testid="stSidebar"] .stSlider label {
-    color: var(--c-gray-600) !important;
-    font-size: 11px !important;
-    font-weight: 600 !important;
-    letter-spacing: 0.05em !important;
-    text-transform: uppercase !important;
-}
-[data-testid="stSidebar"] h1,
-[data-testid="stSidebar"] h2,
-[data-testid="stSidebar"] h3 {
-    color: var(--c-blue-dark) !important;
+/* Sidebar Radio Labels Visibility */
+[data-testid="stSidebar"] [data-testid="stWidgetLabel"] p {
+    color: var(--text-bold) !important;
     font-weight: 700 !important;
-    letter-spacing: -0.02em !important;
-}
-[data-testid="stSidebar"] .stMarkdown p {
-    color: var(--c-text-muted) !important;
-    font-size: 13px !important;
 }
 
-/* ── KPI metric cards ── */
+/* Professional Metric Cards */
 [data-testid="stMetric"] {
-    background: var(--c-surface) !important;
-    border: 1px solid var(--c-border) !important;
-    border-radius: var(--radius-lg) !important;
-    padding: 20px 24px !important;
-    box-shadow: var(--shadow-md) !important;
-    transition: var(--transition) !important;
-    position: relative;
-    overflow: hidden;
-}
-[data-testid="stMetric"]::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, var(--c-blue-mid), #8B5CF6);
-    opacity: 0.9;
-}
-[data-testid="stMetric"]:hover {
-    box-shadow: var(--shadow-hover) !important;
-    transform: translateY(-4px);
-    border-color: var(--c-blue-light) !important;
+    background: white !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 12px !important;
+    padding: 1.25rem !important;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
 }
 [data-testid="stMetricLabel"] {
-    font-size: 12px !important;
+    color: var(--text-muted) !important;
     font-weight: 600 !important;
-    letter-spacing: 0.05em !important;
+    font-size: 0.8rem !important;
     text-transform: uppercase !important;
-    color: var(--c-gray-500) !important;
+    letter-spacing: 0.05em !important;
 }
 [data-testid="stMetricValue"] {
-    font-size: 32px !important;
-    font-weight: 700 !important;
-    color: var(--c-blue-dark) !important;
-    font-family: var(--font-mono) !important;
-    letter-spacing: -0.02em !important;
-    margin-top: 4px !important;
-}
-[data-testid="stMetricDelta"] {
-    font-size: 13px !important;
-    font-weight: 600 !important;
+    color: var(--text-bold) !important;
+    font-weight: 800 !important;
 }
 
-/* ── Plotly chart containers ── */
-[data-testid="stPlotlyChart"] {
-    background: var(--c-surface) !important;
-    border: 1px solid var(--c-border) !important;
-    border-radius: var(--radius-lg) !important;
-    padding: 20px !important;
-    box-shadow: var(--shadow-md) !important;
-    transition: var(--transition) !important;
-}
-[data-testid="stPlotlyChart"]:hover {
-    box-shadow: var(--shadow-hover) !important;
-    border-color: var(--c-gray-300) !important;
-    transform: translateY(-2px);
-}
-
-/* ── Section headings ── */
-h3, h4, h5 {
-    color: var(--c-blue-dark) !important;
-    font-family: var(--font-body) !important;
-    font-weight: 700 !important;
-    letter-spacing: -0.02em !important;
-}
-h5 {
-    font-size: 15px !important;
-    color: var(--c-gray-800) !important;
-    margin-bottom: 12px !important;
-}
-
-/* ── Section title pill (Pulse animations) ── */
+/* Section Header styling */
 .section-header {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    background: var(--c-blue-light);
-    border: 1px solid rgba(37,99,235,0.2);
-    border-radius: 100px;
-    padding: 6px 16px 6px 12px;
-    margin-bottom: 16px;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--c-blue-mid);
-    letter-spacing: 0.05em;
+    font-size: 0.8rem;
+    font-weight: 800;
     text-transform: uppercase;
-    box-shadow: var(--shadow-sm);
+    letter-spacing: 0.08em;
+    color: var(--brand-primary) !important;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 2.5rem 0 1rem 0;
 }
 .section-header .dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--c-blue-accent);
-    animation: safe-pulse 2s ease-in-out infinite;
-}
-.section-header.alert-header {
-    background: var(--c-red-light);
-    border-color: rgba(239, 68, 68, 0.2);
-    color: var(--c-red);
-}
-.section-header.alert-header .dot {
-    background: var(--c-red);
-    animation: alert-pulse 1.2s ease-in-out infinite;
-}
-@keyframes safe-pulse {
-    0%,100% { opacity:1; transform:scale(1); box-shadow: 0 0 0 0 rgba(59,130,246,0.4); }
-    50%      { opacity:0.7; transform:scale(0.85); box-shadow: 0 0 0 4px rgba(59,130,246,0); }
-}
-@keyframes alert-pulse {
-    0%,100% { opacity:1; transform:scale(1); box-shadow: 0 0 0 0 rgba(239,68,68,0.5); }
-    50%      { opacity:0.8; transform:scale(1.15); box-shadow: 0 0 0 6px rgba(239,68,68,0); }
+    width: 6px; height: 6px; border-radius: 50%; background: var(--brand-primary);
 }
 
-/* ── Dataframe / Alert feed ── */
-[data-testid="stDataFrame"] {
-    background: var(--c-surface) !important;
-    border: 1px solid var(--c-border) !important;
-    border-radius: var(--radius-lg) !important;
-    box-shadow: var(--shadow-md) !important;
-    overflow: hidden !important;
-}
-[data-testid="stDataFrame"] table {
-    font-family: var(--font-mono) !important;
-    font-size: 13px !important;
-    color: var(--c-gray-800) !important;
-}
-[data-testid="stDataFrame"] thead th {
-    background: var(--c-gray-100) !important;
-    color: var(--c-gray-600) !important;
-    font-weight: 600 !important;
-    font-size: 11px !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.05em !important;
-    border-bottom: 2px solid var(--c-border) !important;
-    padding: 14px 16px !important;
-}
-[data-testid="stDataFrame"] tbody tr {
-    transition: var(--transition) !important;
-}
-[data-testid="stDataFrame"] tbody tr:hover {
-    background: var(--c-gray-100) !important;
-    transform: scale(1.001);
+/* Force light theme for all internal components */
+[data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+    background-color: #FFFFFF !important;
 }
 
-/* ── Alert / info / success boxes ── */
-[data-testid="stAlert"] {
-    border-radius: var(--radius-md) !important;
-    border-left-width: 5px !important;
-    font-family: var(--font-body) !important;
-    font-size: 15px !important;
-    box-shadow: var(--shadow-sm) !important;
+/* Pastel Blue Sidebar */
+[data-testid="stSidebar"] {
+    background-color: #F1F5F9 !important; /* Light Slate / Pastel Blue */
+    border-right: 1px solid var(--border-color) !important;
 }
 
-/* ── Divider ── */
-hr {
-    border-color: var(--c-gray-200) !important;
-    margin: 2rem 0 !important;
+/* Sidebar Reset for Lightness */
+[data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] label {
+    color: var(--text-bold) !important;
 }
 
-/* ── UI Element Overrides (Sliders, Selects) ── */
-div[data-baseweb="slider"] > div > div {
-    background: var(--c-blue-mid) !important;
+/* Decisive Dataframe Overrides (Pure White) */
+[data-testid="stDataFrame"], [data-testid="stTable"] {
+    background-color: #FFFFFF !important;
+    border: 1px solid var(--border-color) !important;
 }
-.stCheckbox > label {
-    color: var(--c-text) !important;
+[data-testid="stDataFrame"] div, [data-testid="stDataFrame"] span {
+    color: var(--text-main) !important;
 }
 
-/* ── Streamlit default overrides ── */
-.stApp header { background: transparent !important; }
-footer { display: none !important; }
-#MainMenu { display: none !important; }
-[data-testid="stDecoration"] { display: none !important; }
-[data-testid="stToolbar"] { display: none !important; }
-
-/* ── Smooth Cascade Animation for Elements ── */
-@keyframes cascadeUp {
-    from { opacity:0; transform:translateY(20px); }
-    to   { opacity:1; transform:translateY(0); }
+/* Elegant Table Header Override */
+.stDataFrame thead th {
+    background-color: #F8FAFC !important;
+    color: var(--text-bold) !important;
+    font-weight: 700 !important;
 }
-.main .block-container > * {
-    animation: cascadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-.main .block-container > *:nth-child(1) { animation-delay: 0.00s; }
-.main .block-container > *:nth-child(2) { animation-delay: 0.08s; }
-.main .block-container > *:nth-child(3) { animation-delay: 0.16s; }
-.main .block-container > *:nth-child(4) { animation-delay: 0.24s; }
-.main .block-container > *:nth-child(5) { animation-delay: 0.32s; }
-.main .block-container > *:nth-child(6) { animation-delay: 0.40s; }
-.main .block-container > *:nth-child(7) { animation-delay: 0.48s; }
 
-/* ── Scrollbar customization ── */
-::-webkit-scrollbar { width:8px; height:8px; }
-::-webkit-scrollbar-track { background: var(--c-bg); }
-::-webkit-scrollbar-thumb { background: var(--c-gray-300); border-radius: 99px; }
-::-webkit-scrollbar-thumb:hover { background: var(--c-gray-400); }
+/* Top bar styling */
+.top-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1rem 0; border-bottom: 2px solid var(--border-color);
+    margin-bottom: 2.5rem;
+}
 </style>
 """, unsafe_allow_html=True)
 
-# (Plotly Layout styling logic removed - now isolated in helpers.charts)
-
+# ── LOGIC: DATA & STATE ──
 df, total_docs = load_data()
-
-if df is None:
-    st.stop()
-
+if df is None: st.stop()
 if df.empty:
-    st.info("No data available yet. Waiting for transactions stream...")
-    time.sleep(10)
+    st.info("Initializing Network Stream...")
+    time.sleep(5)
     st.rerun()
 
 df['processed_at'] = pd.to_datetime(df['processed_at'])
 
-# ── NAVIGATION SYSTEM ──
+# ── HYBRID NAVIGATION ──
 with st.sidebar:
-    st.markdown("### 🧭 Navigation")
-    page = st.radio("Go to:", ["Overview", "Deep Analytics", "Forensic Alerts"], label_visibility="collapsed")
+    st.image("https://cdn-icons-png.flaticon.com/512/2092/2092202.png", width=60) # Shield icon
+    st.markdown("### FraudPulse **PRO**")
+    st.caption("Network Integrity Engine v2.4")
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    page = st.radio("MAIN NAVIGATION", 
+                    ["OVERVIEW", "ANALYTICS", "EXPLORER", "ALERTS"],
+                    index=0, label_visibility="collapsed")
+    
     st.markdown("---")
-    
-    st.subheader("Pipeline Status")
-    st.metric("MongoDB Docs", f"{total_docs:,}")
-    recent_time = df['processed_at'].max().strftime("%H:%M:%S")
-    st.metric("Latest Update", recent_time)
+    st.markdown("#### ACTIVE FILTERS")
+    f_type = st.multiselect("TRANS. TYPE", options=df['type'].unique(), default=df['type'].unique())
+    f_risk = st.multiselect("RISK THRESHOLD", options=['HIGH', 'MEDIUM', 'LOW'], default=['HIGH', 'MEDIUM', 'LOW'])
     
     st.markdown("---")
-    st.subheader("Global Filters")
-    selected_types = st.multiselect("Tx Type", options=df['type'].unique(), default=df['type'].unique())
-    selected_risk = st.multiselect("Risk Level", options=df['risk_level'].unique(), default=df['risk_level'].unique())
-    
-    max_amt = float(df['amount'].max())
-    if max_amt <= 0: max_amt = 1000.0
-    selected_amount = st.slider("Min Amount ($)", 0.0, max_amt, 0.0)
+    st.markdown("#### PIPELINE OPS")
+    st.info(f"⚡ Live: {total_docs:,} events indexed")
 
-# Filter Data
+# Global Filter Application
 filtered_df = df[
-    (df['type'].isin(selected_types)) &
-    (df['risk_level'].isin(selected_risk)) &
-    (df['amount'] >= selected_amount)
+    (df['type'].isin(f_type)) &
+    (df['risk_level'].isin(f_risk))
 ]
 
+# ── TOP BAR COMPONENT ──
+st.markdown(f"""
+<div class="top-bar">
+    <div style="font-weight: 800; color: #0F172A; font-family: 'Inter', sans-serif;">
+        <span class="pulse-indicator"></span> NETWORK STATUS: <span style="color: #059669;">OPERATIONAL</span>
+    </div>
+    <div style="font-size: 0.85rem; color: #475569; font-weight: 600;">
+        LAST SYNC: {df['processed_at'].max().strftime('%H:%M:%S')}
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
 # ── PAGE ROUTING ──
-if page == "Overview":
-    st.markdown('<div class="section-header"><span class="dot"></span>Executive Summary</div>', unsafe_allow_html=True)
-    
-    kpi1, kpi2, kpi3, kpi4 = st.columns(4)
-    total_txs = len(filtered_df)
-    fraud_txs = len(filtered_df[filtered_df['fraud_flag'] == True])
-    fraud_rate = (fraud_txs / total_txs * 100) if total_txs > 0 else 0
-    total_fraud_amt = filtered_df[filtered_df['fraud_flag'] == True]['amount'].sum()
-    avg_prob = filtered_df['fraud_probability'].mean() if total_txs > 0 else 0
+content_area = st.container()
 
-    kpi1.metric("Total Transactions", f"{total_txs:,}")
-    kpi2.metric("Fraud Rate %", f"{fraud_rate:.2f}%")
-    kpi3.metric("Fraudulent Volume", f"${total_fraud_amt:,.2f}")
-    kpi4.metric("Avg Risk Score", f"{avg_prob:.4f}")
-
-    st.markdown("---")
-    colA, colB = st.columns([2, 1])
-    with colA:
-        st.markdown("##### Transaction Velocity vs Fraud")
-        fig1 = hc.create_step_volume_chart(filtered_df)
-        st.plotly_chart(fig1, use_container_width=True)
-    with colB:
-        st.markdown("##### Risk Distribution")
-        fig5 = hc.create_risk_pie_chart(filtered_df)
-        st.plotly_chart(fig5, use_container_width=True)
-
-elif page == "Deep Analytics":
-    st.markdown('<div class="section-header"><span class="dot"></span>Behavioral Analytics</div>', unsafe_allow_html=True)
-    
-    tab1, tab2 = st.tabs(["Type Analysis", "Probability Models"])
-    
-    with tab1:
-        c1, c2 = st.columns(2)
-        with c1:
-            st.markdown("##### Fraud Rate per Category")
-            st.plotly_chart(hc.create_type_rate_chart(filtered_df), use_container_width=True)
-        with c2:
-            st.markdown("##### Avg Loss per Category")
-            fig4 = hc.create_type_amt_chart(filtered_df)
-            if fig4: st.plotly_chart(fig4, use_container_width=True)
-            else: st.info("No frauds in this segment.")
-            
-    with tab2:
-        c3, c4 = st.columns(2)
-        with c3:
-            st.markdown("##### Model Detection Confidence")
-            st.plotly_chart(hc.create_fraud_prob_chart(filtered_df), use_container_width=True)
-        with c4:
-            st.markdown("##### Detection Engine Overlap")
-            fig6 = hc.create_overlap_chart(filtered_df)
-            if fig6: st.plotly_chart(fig6, use_container_width=True)
-            else: st.info("No data.")
-
-    st.markdown("---")
-    st.markdown("#####  Balance Drain Correlation")
-    st.plotly_chart(hc.create_origin_scatter_chart(filtered_df), use_container_width=True)
-
-elif page == " Forensic Alerts":
-    st.markdown('<div class="section-header alert-header"><span class="dot"></span>Real-Time Threat Intelligence</div>', unsafe_allow_html=True)
-    
-    fraud_feed = df[df['fraud_flag'] == True].sort_values('processed_at', ascending=False).head(50).copy()
-    
-    if not fraud_feed.empty:
-        # Pre-process for beautiful display
-        fraud_feed['Status'] = fraud_feed['risk_level'].apply(lambda x: f"🔴 CRITICAL" if x == 'HIGH' else f"🟡 WARNING")
-        fraud_feed['Engine'] = fraud_feed.apply(lambda r: " Model" if r.model_flag and r.rule_triggered=='None' else " Combined" if r.model_flag else " Rules", axis=1)
+with content_area:
+    if page == "OVERVIEW":
+        # Custom Risk Gauge (SVG)
+        avg_score = filtered_df['fraud_probability'].mean()
+        gauge_color = "#059669" if avg_score < 0.3 else "#D97706" if avg_score < 0.7 else "#DC2626"
         
-        display_cols = ['processed_at', 'Status', 'type', 'amount', 'nameOrig', 'fraud_probability', 'Engine']
-        display_df = fraud_feed[display_cols].rename(columns={
-            'processed_at': 'Timestamp', 'nameOrig': 'SourceID', 'fraud_probability': 'Score', 'amount': 'Amount'
-        })
+        st.markdown(f"""
+        <div style="display: flex; gap: 2rem; align-items: center; background: #FFFFFF; padding: 2rem; border-radius: 16px; border: 2px solid #E2E8F0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+            <div style="flex: 1;">
+                <div class="section-header"><span class="dot"></span>Global Risk Index</div>
+                <h1 style="font-size: 4rem; margin: 0; color: {gauge_color} !important; font-weight: 900;">{avg_score:.2%}</h1>
+                <p style="color: #0F172A !important; font-weight: 700; font-size: 1.1rem; margin: 0;">Aggregated threat probability across active streams.</p>
+            </div>
+            <div style="flex: 0 0 300px;">
+                 <svg viewBox="0 0 100 50" width="100%">
+                    <path d="M 10 45 A 35 35 0 0 1 90 45" fill="none" stroke="#F1F5F9" stroke-width="8" stroke-linecap="round"/>
+                    <path d="M 10 45 A 35 35 0 0 1 90 45" fill="none" stroke="{gauge_color}" stroke-width="8" stroke-dasharray="{avg_score * 125}, 1000" stroke-linecap="round"/>
+                 </svg>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
-        def style_rows(row):
-            if "CRITICAL" in str(row.Status):
-                return ['background-color: rgba(239, 68, 68, 0.08); color: #991B1B; font-weight: 600'] * len(row)
-            return ['color: #1E293B'] * len(row)
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        # Executive KPIs
+        kpi1, kpi2, kpi3 = st.columns(3)
+        kpi1.metric("Total Throughput", f"{len(filtered_df):,}")
+        fraud_count = len(filtered_df[filtered_df['fraud_flag'] == True])
+        kpi2.metric("Identified Threats", f"{fraud_count:,}", delta=f"{(fraud_count/max(1,len(filtered_df))):.1%}", delta_color="inverse")
+        total_val = filtered_df[filtered_df['fraud_flag'] == True]['amount'].sum()
+        kpi3.metric("Capital at Risk", f"${total_val:,.0f}")
+
+        st.markdown('<div class="section-header"><span class="dot"></span>Stream Trajectory</div>', unsafe_allow_html=True)
+        st.plotly_chart(hc.create_step_volume_chart(filtered_df), use_container_width=True)
+
+    elif page == "ANALYTICS":
+        st.markdown('<div class="section-header"><span class="dot"></span>Behavioral Intelligence</div>', unsafe_allow_html=True)
+        
+        tab1, tab2 = st.tabs(["💰 LOSS ANALYSIS", "🕵️ ENGINE OVERLAP"])
+        
+        with tab1:
+            c1, c2 = st.columns(2)
+            with c1:
+                st.markdown("##### Threat Density by Type")
+                st.plotly_chart(hc.create_type_rate_chart(filtered_df), use_container_width=True)
+            with c2:
+                st.markdown("##### Average Exposure per Case")
+                fig = hc.create_type_amt_chart(filtered_df)
+                if fig: st.plotly_chart(fig, use_container_width=True)
+                else: st.info("No data in current view.")
+
+        with tab2:
+            c3, c4 = st.columns(2)
+            with c3:
+                st.markdown("##### Detector Overlap (ML vs Rules)")
+                fig_ov = hc.create_overlap_chart(filtered_df)
+                if fig_ov: st.plotly_chart(fig_ov, use_container_width=True)
+            with c4:
+                st.markdown("##### Confidence Clusters")
+                st.plotly_chart(hc.create_fraud_prob_chart(filtered_df), use_container_width=True)
+
+        st.markdown("---")
+        st.markdown("##### Forensic Origin Mapping")
+        st.plotly_chart(hc.create_origin_scatter_chart(filtered_df), use_container_width=True)
+
+    elif page == "EXPLORER":
+        st.markdown('<div class="section-header"><span class="dot"></span>Forensic Explorer</div>', unsafe_allow_html=True)
+        st.caption("Investigate every transaction with millisecond precision.")
+        
+        explorer_df = filtered_df.sort_values('processed_at', ascending=False).head(100).copy()
+        
+        # Elegant Investigator Style (Slate & Crimson)
+        def investigator_style(row):
+            if row.fraud_flag:
+                return ['color: #991B1B !important; font-weight: 700; background-color: #FEF2F2 !important'] * len(row)
+            return ['color: #334155 !important; font-weight: 500'] * len(row)
 
         st.dataframe(
-            display_df.style.apply(style_rows, axis=1).format({"Amount": "${:,.2f}", "Score": "{:.4f}"}),
-            use_container_width=True, height=600
+            explorer_df.style.apply(investigator_style, axis=1)
+                       .format({"amount": "${:,.2f}", "fraud_probability": "{:.4f}"}),
+            use_container_width=True,
+            height=700
         )
-    else:
-        st.success("No active threats detected in the current stream.")
 
-# Footer auto-refresh logic
+    elif page == "ALERTS":
+        st.markdown('<div class="section-header alert-header"><span class="dot"></span>Live Threat Feed</div>', unsafe_allow_html=True)
+        
+        threats = df[df['fraud_flag'] == True].sort_values('processed_at', ascending=False).head(30).copy()
+        
+        if threats.empty:
+            st.success("No critical threats detected in current stream buffer.")
+        else:
+            for idx, row in threats.iterrows():
+                with st.container():
+                    st.markdown(f"""
+                    <div style="background: white; border: 1px solid #E2E8F0; padding: 1.5rem; border-radius: 12px; margin-bottom: 1rem; border-left: 6px solid #DC2626; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <div>
+                                <span style="font-size: 0.85rem; color: #475569 !important; font-weight: 700; font-family: 'JetBrains Mono', monospace;">ID: {row.nameOrig}</span>
+                                <h4 style="margin: 0.5rem 0; color: #0F172A !important; font-weight: 800; font-size: 1.25rem;">{row.type} ATTEMPT</h4>
+                                <p style="margin: 0; font-size: 1rem; color: #334155 !important; font-weight: 600;">Node: <span style="font-family: 'JetBrains Mono'; color: #0F172A !important;">{row.nameDest}</span> | Risk Score: <span style="color: #DC2626 !important; font-weight: 800;">{row.fraud_probability:.2%}</span></p>
+                            </div>
+                            <div style="text-align: right;">
+                                <h2 style="margin: 0; color: #B91C1C !important; font-weight: 900;">${row.amount:,.2f}</h2>
+                                <span style="font-size: 0.85rem; color: #64748B !important; font-weight: 700;">{row.processed_at.strftime('%H:%M:%S')}</span>
+                            </div>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+# ── AUTO-REFRESH ──
 time.sleep(10)
 st.rerun()
