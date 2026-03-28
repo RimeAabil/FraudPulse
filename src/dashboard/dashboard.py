@@ -381,7 +381,7 @@ filtered_df = df[
 # KPI SECTION
 st.markdown("""
 <div class="section-header">
-  <span class="dot"></span>Live Metrics
+  <span class="dot"></span>Executive Summary
 </div>
 """, unsafe_allow_html=True)
 
@@ -405,95 +405,106 @@ kpi2.metric("Fraud Rate %", f"{fraud_rate:.2f}%", delta=f"{recent_fraud_rate:.2f
 kpi3.metric("Total Fraudulent Amount", f"${total_fraud_amt:,.2f}")
 kpi4.metric("Avg Fraud Probability", f"{avg_prob:.4f}")
 
-st.markdown("<div style='margin-top:1.5rem'></div>", unsafe_allow_html=True)
+st.markdown("<div style='margin-top:2rem'></div>", unsafe_allow_html=True)
 
-# CHARTS ROW 1
-col1, col2 = st.columns(2)
+# DEEP ANALYTICS SECTION
+st.markdown("""
+<div class="section-header">
+  <span class="dot"></span>Deep Analytics Deep Dive
+</div>
+""", unsafe_allow_html=True)
 
-with col1:
-    st.markdown("##### Tx Volume vs Fraud Count by Step")
-    fig1 = hc.create_step_volume_chart(filtered_df)
-    st.plotly_chart(fig1, use_container_width=True)
+tab1, tab2 = st.tabs(["📊 Transaction Dynamics", "🔍 Risk Profiling"])
 
-with col2:
-    st.markdown("##### Fraud Probability Distribution")
-    fig2 = hc.create_fraud_prob_chart(filtered_df)
-    st.plotly_chart(fig2, use_container_width=True)
+with tab1:
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("##### Tx Volume vs Fraud Count by Step")
+        fig1 = hc.create_step_volume_chart(filtered_df)
+        st.plotly_chart(fig1, use_container_width=True)
+    with col2:
+        st.markdown("##### Fraud Rate by Transaction Type")
+        fig3 = hc.create_type_rate_chart(filtered_df)
+        st.plotly_chart(fig3, use_container_width=True)
 
-# CHARTS ROW 2
-col3, col4 = st.columns(2)
+with tab2:
+    col3, col4 = st.columns(2)
+    with col3:
+        st.markdown("##### Fraud Probability Distribution")
+        fig2 = hc.create_fraud_prob_chart(filtered_df)
+        st.plotly_chart(fig2, use_container_width=True)
+    with col4:
+        st.markdown("##### Avg Fraudulent Amount by Type")
+        fig4 = hc.create_type_amt_chart(filtered_df)
+        if fig4:
+            st.plotly_chart(fig4, use_container_width=True)
+        else:
+            st.info("No fraudulent transactions found.")
 
-with col3:
-    st.markdown("##### Fraud Rate by Transaction Type")
-    fig3 = hc.create_type_rate_chart(filtered_df)
-    st.plotly_chart(fig3, use_container_width=True)
-
-with col4:
-    st.markdown("##### Avg Fraudulent Amount by Type")
-    fig4 = hc.create_type_amt_chart(filtered_df)
-    if fig4:
-        st.plotly_chart(fig4, use_container_width=True)
-    else:
-        st.info("No fraudulent transactions found.")
-
-# CHARTS ROW 3
+# ADDITIONAL ANALYTICS ROW
 col5, col6, col7 = st.columns(3)
-
 with col5:
     st.markdown("##### Risk Level Distribution")
     fig5 = hc.create_risk_pie_chart(filtered_df)
     st.plotly_chart(fig5, use_container_width=True)
-
 with col6:
     st.markdown("##### Model vs Rule Engine Overlap")
     fig6 = hc.create_overlap_chart(filtered_df)
     if fig6:
         st.plotly_chart(fig6, use_container_width=True)
     else:
-        st.info("No frauds.")
-
+        st.info("No frauds detected.")
 with col7:
     st.markdown("##### Balance Drain (Origin)")
     fig7 = hc.create_origin_scatter_chart(filtered_df)
     st.plotly_chart(fig7, use_container_width=True)
 
-
-# LIVE ALERT FEED
-st.markdown("<div style='margin-top:1rem'></div>", unsafe_allow_html=True)
+# FORENSIC ALERT FEED SECTION
+st.markdown("<div style='margin-top:2rem'></div>", unsafe_allow_html=True)
 st.markdown("""
 <div class="section-header alert-header">
-  <span class="dot"></span>Live Alert Feed — Last 20 Fraud Transactions
+  <span class="dot"></span>Forensic Alert Feed
 </div>
 """, unsafe_allow_html=True)
 
-fraud_feed = df[df['fraud_flag'] == True].head(20).copy()
+# Filter for recent frauds and make table more comprehensive
+fraud_feed = df[df['fraud_flag'] == True].sort_values('processed_at', ascending=False).head(25).copy()
+
 if not fraud_feed.empty:
-    cols_to_show = ['nameOrig', 'nameDest', 'type', 'amount', 'oldbalanceOrg', 'newbalanceOrig',
-                    'fraud_probability', 'risk_level', 'rule_triggered', 'model_flag', 'processed_at']
-    def highlight_risk(row):
-        if row.risk_level == 'HIGH':
-            return [
-                'background-color:#FEF2F2; color:#B91C1C; font-weight:700; border-bottom:1px solid #FECACA'
-                if c in ['risk_level', 'fraud_probability', 'amount'] else
-                'background-color:#FEF2F2; color:#991B1B; border-bottom:1px solid #FECACA'
-                for c in row.index
-            ]
-        elif row.risk_level == 'MEDIUM':
-            return [
-                'background-color:#FFF7ED; color:#C2410C; font-weight:700; border-bottom:1px solid #FED7AA'
-                if c in ['risk_level', 'fraud_probability', 'amount'] else
-                'background-color:#FFF7ED; color:#9A3412; border-bottom:1px solid #FED7AA'
-                for c in row.index
-            ]
-        return ['border-bottom:1px solid #E2E8F0'] * len(row)
+    # Adding emoji indicators for better visual scanning
+    fraud_feed['Risk'] = fraud_feed['risk_level'].apply(lambda x: f"🔴 {x}" if x == 'HIGH' else f"🟡 {x}")
+    fraud_feed['Model'] = fraud_feed['model_flag'].apply(lambda x: "✅" if x else "❌")
+    fraud_feed['Rule'] = fraud_feed['rule_triggered'].apply(lambda x: f"⚠️ {x}" if x != 'None' else "Safe")
     
+    cols_to_show = ['processed_at', 'Risk', 'type', 'amount', 'nameOrig', 'nameDest', 'fraud_probability', 'Model', 'Rule']
+    
+    # Rename for cleaner headers
+    display_df = fraud_feed[cols_to_show].rename(columns={
+        'processed_at': 'Timestamp',
+        'nameOrig': 'Originator',
+        'nameDest': 'Recipient',
+        'fraud_probability': 'Score',
+        'amount': 'Amount ($)'
+    })
+
+    def highlight_risk(row):
+        style = ['border-bottom:1px solid #E2E8F0'] * len(row)
+        if 'HIGH' in str(row.Risk):
+            style = ['background-color:rgba(239, 68, 68, 0.08); color:#991B1B; font-weight:500; border-bottom:1px solid #FECACA'] * len(row)
+        elif 'MEDIUM' in str(row.Risk):
+            style = ['background-color:rgba(249, 115, 22, 0.05); color:#9A3412; border-bottom:1px solid #FED7AA'] * len(row)
+        return style
+
     st.dataframe(
-        fraud_feed[cols_to_show].style.apply(highlight_risk, axis=1),
+        display_df.style.apply(highlight_risk, axis=1)
+                  .format({"Amount ($)": "{:,.2f}", "Score": "{:.4f}"}),
         use_container_width=True,
-        height=420,
+        height=500,
     )
+    
+    st.caption("Showing the latest 25 identified fraudulent transactions. Table updates automatically as new streams arrive.")
 else:
-    st.success("No recent fraud detections.")
+    st.success("System Monitor: No fraudulent transactions detected in the current stream buffer.")
 
 time.sleep(10)
 st.rerun()
