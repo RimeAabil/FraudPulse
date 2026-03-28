@@ -1,4 +1,4 @@
-# 🛡️ FraudPulse
+# FraudPulse
 
 ```text
   ___                    _ ____        _          
@@ -9,40 +9,45 @@
 
 ## Production-Grade Real-Time Fraud Detection Pipeline
 
-FraudPulse is a robust, fault-tolerant data engineering pipeline designed to detect fraudulent mobile money transactions in real time. It processes streams of transaction data using Apache Kafka, evaluates them against a pre-trained XGBoost model and a deterministic rule engine using Apache Spark Structured Streaming, and stores the results in MongoDB. A sleek, auto-refreshing Streamlit dashboard provides live visibility into pipeline health and fraud metrics.
+FraudPulse is a robust, fault-tolerant data engineering pipeline designed to detect fraudulent mobile money transactions in real time. It processes high-throughput streams of transaction data using Apache Kafka, evaluates them against a pre-trained XGBoost model nested alongside a deterministic rule engine using Apache Spark Structured Streaming, and persists the evaluated results in MongoDB. A streamlined, auto-refreshing Streamlit dashboard provides live visibility into pipeline health and fraud metrics.
 
-## 🏃 Quick Start: How to Run This Project
+---
 
-If you want to immediately launch the entire streaming pipeline locally, follow these 3 exact steps:
+## Quick Start: Launching the Project
+
+To immediately launch the streaming pipeline in a local environment, follow these three execution steps:
 
 **1. Prepare the Data & Train the Model**
-Download `paysim.csv` from Kaggle and place it in the `data/` folder. Then, generate the initial ML model:
+Download `paysim.csv` from Kaggle and place it in the core `data/` folder. Subsequently, generate the initial machine learning model:
+
 ```bash
 python -m venv venv
-source venv/bin/activate  # Or .\venv\Scripts\activate on Windows
+source venv/bin/activate  # On Windows: .\venv\Scripts\activate
 pip install -r src/ml/requirements.txt
 python src/ml/train.py
 ```
 
-**2. Start the Infrastructure**
-Bring up the foundational streaming and storage layers (Kafka, Zookeeper, MongoDB), and initialize the exact Kafka topics:
+**2. Start the Core Infrastructure**
+Initialize the foundational streaming and storage layers (Kafka, Zookeeper, MongoDB), and provision the Kafka topics:
+
 ```bash
 docker-compose up -d zookeeper kafka mongodb spark-master spark-worker
 docker-compose up -d kafka-init
 ```
 
 **3. Launch the Microservices**
-Build and start the streaming producer, the real-time Spark Scala consumer, and the live dashboard:
+Build and deploy the streaming producer, the real-time Scala-based Spark consumer, and the dashboard visualization layer:
+
 ```bash
 docker-compose up --build -d spark-consumer dashboard producer
 ```
 
-👉 **View the Live Dashboard at: [http://localhost:8501](http://localhost:8501)**
-*(Allow 30-60 seconds for Spark to compile and begin processing the first batch).*
+**View the Live Dashboard at: [http://localhost:8501](http://localhost:8501)**
+*(Allow 30-60 seconds for the Spark engine to compile dependencies and process the initial micro-batch).*
 
 ---
 
-### 🏗️ Architecture
+## System Architecture
 
 ```mermaid
 graph TD
@@ -58,23 +63,23 @@ graph TD
     E -->|Live Polling| F[Streamlit Dashboard\nwith Plotly]:::ui
 ```
 
-### 📁 Project Structure
+## Project Structure
 
 ```
 FraudPulse/
 ├── src/
-│   ├── producer/        # Kafka producer to stream transaction data
-│   ├── spark/           # Spark Structured Streaming consumer logic
+│   ├── producer/        # Kafka producer to publish transaction data
+│   ├── spark/           # Spark Structured Streaming consumer logic (Scala)
 │   ├── dashboard/       # Streamlit real-time reporting dashboard
 │   └── ml/              # Model training and testing pipelines
-├── models/              # Saved model weights (.pkl)
+├── models/              # Serialized model constraints and weights (.json)
 ├── data/                # Datasets (e.g. paysim.csv)
 ├── scripts/             # Orchestration and database initialization scripts
-├── notebooks/           # Exploratory Jupyter Notebooks
-└── docker-compose.yml   # Infrastructure definitions
+├── notebooks/           # Exploratory Jupyter Notebooks for EDA
+└── docker-compose.yml   # Infrastructure definitions and networking
 ```
 
-### 💻 Tech Stack
+## Technology Stack
 
 | Component | Technology | Version |
 |-----------|------------|---------|
@@ -86,106 +91,112 @@ FraudPulse/
 | **Machine Learning** | XGBoost & Scikit-learn | `2.0.3` / `1.4.0` |
 | **Orchestration** | Docker Compose | N/A |
 
-### 🛠️ Prerequisites
+## Prerequisites
+
 - [Docker](https://docs.docker.com/get-docker/) & Docker Compose
-- Python 3.11 (for local model training)
-- Over 8GB of RAM available for Docker (Spark and Kafka can be memory-intensive)
+- Python 3.11 (Required for local model training)
+- Over 8GB of RAM available for Docker (Spark and Kafka are highly memory-intensive processes)
 
-### 🚀 Production-Grade Step-by-Step Setup
+---
 
-To run this robustly—mirroring a production deployment sequence—you need to bring the infrastructure up layer by layer, ensuring dependencies are ready before the consumers and producers start.
+## Production-Grade Setup Guide
+
+To run this pipeline robustly—mirroring a strict production deployment sequence—you must bring the infrastructure online layer by layer, verifying dependencies before consumers and producers are initialized.
 
 **1. Initial Setup & Data Acquisition**
-First, verify Docker is running and has at least **8GB of RAM** allocated (Kafka and Spark are highly memory-intensive).
-- Download the `paysim.csv` dataset from [Kaggle](https://www.kaggle.com/datasets/ealaxi/paysim1) and place it in the `data/` directory.
+Verify the Docker runtime is active with at least **8GB of RAM** allocated. 
+Download the `paysim.csv` dataset from [Kaggle](https://www.kaggle.com/datasets/ealaxi/paysim1) and place it neatly in the `data/` directory.
 
 **2. Train the XGBoost Model (Offline Stage)**
-Before Spark can stream, it needs the serialized `fraud_model.json` and `feature_cols.json` files. In production, this would be handled by a CI/CD pipeline or Airflow, but locally we execute the `ml` module:
+Prior to Spark stream initialization, the engine requires the serialized `fraud_model.json` and `feature_cols.json` assets. In a production environment, this is managed via CI/CD pipelines (e.g., Airflow); locally, execute the `ml` module:
+
 ```bash
 # Create and activate a virtual environment
 python -m venv venv
 source venv/bin/activate    # On Windows: .\venv\Scripts\activate
 
-# Install training dependencies and run the pipeline
+# Install training requirements and execute the pipeline
 pip install -r src/ml/requirements.txt
 python src/ml/train.py
 python src/ml/evaluate.py
 ```
-*(Verify that `models/fraud_model.json` and `models/feature_cols.json` were successfully generated).*
+*(Verify that `models/fraud_model.json` and `models/feature_cols.json` were generated successfully).*
 
-**3. Bring Up the State & Storage Layer**
-In production, start brokers and databases before processing layers:
+**3. Initialize the State & Storage Layer**
+Deploy message brokers and persistence layers before activating processing engines:
+
 ```bash
 docker-compose up -d zookeeper kafka mongodb
 ```
-*(Wait ~15 seconds for these to initialize completely).*
+*(Allow approximately 15 seconds for these clusters to initialize).*
 
-**4. Initialize Configurations**
-Trigger the topic creation script. This creates the Kafka topic `fraud-transactions` with exactly 3 partitions for parallelism:
+**4. Provision Configurations**
+Trigger the topic creation script. This provisions the target Kafka topic `fraud-transactions` with exactly 3 partitions for horizontal parallelism:
+
 ```bash
 docker-compose up -d kafka-init
 ```
 
 **5. Launch the Processing Engine (Apache Spark)**
-Start the master node and the worker node.
+Boot both the master orchestrator and the worker execution node:
+
 ```bash
 docker-compose up -d spark-master spark-worker
 ```
 
 **6. Build and Deploy Consumers, Dashboard, and Producers**
-Now build the custom microservices. The Scala Spark streaming job takes a minute on the first run as `sbt` downloads Scala dependencies and compiles `FraudPulseStream.scala` into a `.jar` inside the Docker image.
+Build the custom microservices. The Scala Spark streaming job will require ~60 seconds to execute the first build, as `sbt` retrieves Scala dependencies and compiles `FraudPulseStream.scala` into an executable `.jar` directly inside the container instance.
+
 ```bash
 docker-compose up --build -d spark-consumer dashboard producer
 ```
 
 **7. Monitor the Pipeline**
-Your pipeline is now actively streaming! Here is how to monitor it like an engineer:
-- **View the Live Dashboard:** Open **[http://localhost:8501](http://localhost:8501)**. It auto-refreshes every 10 seconds.
-- **Monitor Scala Consumer Logs:** Check if Spark is gracefully processing batches:
+The pipeline is now successfully streaming. Monitor its operations via standard engineering practices:
+- **View the Live Dashboard:** Access **[http://localhost:8501](http://localhost:8501)**. The UI polls MongoDB and auto-refreshes continuously.
+- **Inspect Scala Consumer Logs:** Verify Spark micro-batch processing gracefully:
   ```bash
   docker-compose logs -f spark-consumer
   ```
-- **Monitor Producer Throughput:**
+- **Inspect Producer Throughput:**
   ```bash
   docker-compose logs -f producer
   ```
 
 **8. Graceful Production Shutdown vs. Hard Reset**
-- **Graceful Pause:** If you need to stop the pipeline but want Spark to resume perfectly from where it left off (using its Checkpoints), run:
+- **Graceful Pause:** To pause the pipeline, allowing Spark to utilize its existing Checkpoint data upon restart, execute:
   ```bash
   docker-compose stop
   ```
-- **Hard Wipe (Dev Reset):** To completely wipe MongoDB data, Kafka topics, and Spark checkpoints and restart from a blank slate:
+- **Development Wipe:** To fully purge MongoDB data, wipe Kafka partitions, and delete Spark staging files, dropping back to a blank state:
   ```bash
   bash scripts/reset.sh
   ```
 
-### 🚨 Troubleshooting
+---
+
+## Troubleshooting Guide
 
 1. **Error: `kafka-init` exits with code 1**
-   - *Fix:* Kafka takes a moment to become available. `kafka-init` has retries, but if it permanently fails, ensure Docker has enough memory allocated.
+   - *Resolution:* Kafka initialization inherently delays slightly. `kafka-init` executes retries, but if permanent failure occurs, verify Docker's memory allocation limits.
 2. **Error: Spark container crash `java.lang.OutOfMemoryError`**
-   - *Fix:* Increase your Docker Engine memory limit to at least 8GB. Also, you can lower `SPARK_WORKER_MEMORY` in `docker-compose.yml`.
+   - *Resolution:* Increase the Docker Engine limit to 8GB minimum. Alternatively, reduce `SPARK_WORKER_MEMORY` directly in `docker-compose.yml`.
 3. **Error: Consumer logs `Error loading model context`**
-   - *Fix:* Ensure you ran `python src/ml/train.py` before `docker-compose build`. The `models/` directory must exist prior to building.
+   - *Resolution:* Ensure `python src/ml/train.py` was explicitly executed. The `/models` directory must be fully populated prior to the `docker-compose build` step.
 4. **Dashboard Shows "MongoDB Connection Error"**
-   - *Fix:* Wait 10-20 seconds. MongoDB takes a moment to initialize its replica sets and accept connections. The dashboard will auto-refresh.
-5. **No Data Appearing on Dashboard**
-   - *Fix:* Check `producer` logs (`docker logs producer`). Ensure `paysim.csv` is correctly named and placed in `data/`.
+   - *Resolution:* Allow 10-20 seconds for the engine to initialize replica sets. The dashboard will automatically reconnect once active.
+5. **No Visual Data Rendering on Dashboard**
+   - *Resolution:* Inspect the `producer` logs. Verify the source dataset is accurately titled `paysim.csv` and situated in the `data/` branch.
 
 ---
 
-### What to demo to recruiters
+## Feature Summary and System Capabilities
 
-**3 most impressive things to show live:**
-1. **The Live Alert Feed & Auto-Refresh:** Keep the Streamlit dashboard open and watch the "Transactions Processed" and "Live Alert Feed" update in real-time as the producer streams events through Kafka. Color-coded risk indicators make parsing threats instant.
-2. **Fault-Tolerant Processing:** Kill the spark-worker container (`docker kill spark-worker`) and show how Kafka retains offsets. Bring it back up and watch Spark instantly catch up gracefully due to its checkpointing semantics.
-3. **Dual-Layer Scoring System:** Point out the "Model vs Rule Engine Overlap" chart. It proves an understanding of production ML where models aren't perfect, and deterministic rules (e.g., origin drained, destination unchanged) act as parallel safety nets.
+1. **Fault-Tolerant Processing:** Employs checkpointing semantics enabling Docker node failures to resume gracefully without data loss or duplication offset issues.
+2. **Dual-Layer Scoring System:** Processes real-time transactions utilizing both a deterministic backend rules-engine and a probability-driven XGBoost classifier acting as parallel processing constraints.
+3. **Production Simulation:** Incorporates exponential backoffs, asynchronous messaging, and containerized dependencies mimicking exact tier-1 financial architectures.
 
-**The 2-minute story to tell:**
-"I built FraudPulse to mimic a real financial institution's streaming architecture. Transactions are replayed row-by-row into Kafka with exponential backoff on connection. A fault-tolerant Scala Spark Structured Streaming consumer ingests this infinite stream, applies custom transformations to engineer 5 domain-specific features on the fly, and dynamically loads a pre-trained XGBoost4J model to all executors to score fraud probability. This score is aggregated with a deterministic rule engine, stored exactly-once into an indexed MongoDB collection, and visualized instantly on a Plotly/Streamlit frontend. It's scalable, containerized, and robust against schema corruption."
-
-**3 senior-level improvements to mention:**
-1. **Model Registry & Hot Swapping:** Propose replacing the static `.pkl` build-time copy with an MLflow registry to dynamically fetch and reload new models without restarting the streaming job.
-2. **Schema Registry:** Mention integrating Confluent Schema Registry (Avro/Protobuf) instead of raw JSON to prevent upstream producer changes from breaking the Spark consumer.
-3. **Stateful Streaming (Sliding Windows):** Highlight the potential of adding windowed aggregations (e.g., "count of transactions from this IP in the last 10 minutes") using Spark's watermark features to catch rapid-fire structured attacks.
+**Proposed Future Scalability Plans:**
+1. **Model Registry & Hot Swapping:** Implement MLflow registries replacing static `.json` injections, enabling seamless model redeployment vectors without process interruption.
+2. **Confluent Schema Registry:** Introduce centralized Avro/Protobuf protocols overriding un-typed JSON transfers to prevent downstream Spark transformation pipeline breakages.
+3. **Stateful Windowing Capabilities:** Integrate advanced Spark watermarking functions for aggregate temporal metrics (monitoring velocity per entity over sliding 10-minute intervals).
