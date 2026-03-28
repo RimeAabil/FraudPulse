@@ -476,13 +476,15 @@ if not fraud_feed.empty:
                 'background-color:#FEF2F2; color:#B91C1C; font-weight:700; border-bottom:1px solid #FECACA'
                 if c in ['risk_level', 'fraud_probability', 'amount'] else
                 'background-color:#FEF2F2; color:#991B1B; border-bottom:1px solid #FECACA'
-            ] * len(row)
+                for c in row.index
+            ]
         elif row.risk_level == 'MEDIUM':
             return [
                 'background-color:#FFF7ED; color:#C2410C; font-weight:700; border-bottom:1px solid #FED7AA'
                 if c in ['risk_level', 'fraud_probability', 'amount'] else
                 'background-color:#FFF7ED; color:#9A3412; border-bottom:1px solid #FED7AA'
-            ] * len(row)
+                for c in row.index
+            ]
         return ['border-bottom:1px solid #E2E8F0'] * len(row)
     
     st.dataframe(
