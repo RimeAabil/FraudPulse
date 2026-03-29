@@ -1,11 +1,5 @@
 # FraudPulse
 
-```text
-  ___                    _ ____        _          
- | __| _ __ _ _  _  __| | _ \_  _| |___ ___ 
- | _| '_/ _` | || |/ _` |  _/ || | (_-</ -_)
- |_||_| \__,_|\_,_|\__,_|_|  \_,_|_/__/\___|
-```
 
 ## Production-Grade Real-Time Fraud Detection Pipeline
 
