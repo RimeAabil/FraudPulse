@@ -165,6 +165,3 @@ Verify the health of all 15+ containers and network ports.
 - `scripts/`: System diagnostic and initialization tools.
 - `config/`: Configuration files for Kafka, Spark, Prometheus, and Grafana.
 
----
-
-**Built with ❤️ by your AI Pair Programmer for the Final Project Jury.**
