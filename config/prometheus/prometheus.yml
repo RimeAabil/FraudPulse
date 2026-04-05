@@ -1,0 +1,88 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'fraudpulse-prod'
+    environment: 'docker-compose'
+
+# Alerting rules
+rule_files:
+  - "/etc/prometheus/rules/*.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+scrape_configs:
+
+  # ─── Prometheus self-monitoring ──────────────────────────────
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # ─── Kafka Brokers (JMX Exporter) ────────────────────────────
+  - job_name: 'kafka-broker-1'
+    static_configs:
+      - targets: ['kafka-1:9404']
+    labels:
+      broker_id: '1'
+
+  - job_name: 'kafka-broker-2'
+    static_configs:
+      - targets: ['kafka-2:9404']
+    labels:
+      broker_id: '2'
+
+  - job_name: 'kafka-broker-3'
+    static_configs:
+      - targets: ['kafka-3:9404']
+    labels:
+      broker_id: '3'
+
+  # ─── Kafka Lag Exporter ───────────────────────────────────────
+  - job_name: 'kafka-lag-exporter'
+    static_configs:
+      - targets: ['kafka-lag-exporter:9999']
+
+  # ─── Schema Registry ──────────────────────────────────────────
+  - job_name: 'schema-registry'
+    static_configs:
+      - targets: ['schema-registry:8081']
+    metrics_path: '/metrics'
+
+  # ─── Spark ────────────────────────────────────────────────────
+  - job_name: 'spark-master'
+    static_configs:
+      - targets: ['spark-master:8080']
+    metrics_path: '/metrics/master/prometheus/'
+
+  - job_name: 'spark-pushgateway'
+    honor_labels: true
+    static_configs:
+      - targets: ['pushgateway:9091']
+
+  # ─── MongoDB Exporter ─────────────────────────────────────────
+  - job_name: 'mongodb'
+    static_configs:
+      - targets: ['mongodb-exporter:9216']
+
+  # ─── Producer Application Metrics ────────────────────────────
+  - job_name: 'fraudpulse-producer'
+    static_configs:
+      - targets: ['producer:8001']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # ─── Model Server (FastAPI) ───────────────────────────────────
+  - job_name: 'model-server'
+    static_configs:
+      - targets: ['model-server:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # ─── MLflow ───────────────────────────────────────────────────
+  - job_name: 'mlflow'
+    static_configs:
+      - targets: ['mlflow:5000']
+    metrics_path: '/health'

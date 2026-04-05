@@ -1,0 +1,69 @@
+{
+  "type": "record",
+  "name": "FraudTransaction",
+  "namespace": "com.fraudpulse.avro",
+  "doc": "Schema for raw transaction events published to the fraud-transactions Kafka topic.",
+  "fields": [
+    {
+      "name": "step",
+      "type": "int",
+      "doc": "Simulation time step (maps to 1 hour of real time)."
+    },
+    {
+      "name": "type",
+      "type": {
+        "type": "enum",
+        "name": "TransactionType",
+        "symbols": ["PAYMENT", "TRANSFER", "CASH_OUT", "DEBIT", "CASH_IN"],
+        "doc": "Type of mobile money transaction."
+      }
+    },
+    {
+      "name": "amount",
+      "type": "double",
+      "doc": "Transaction amount in local currency."
+    },
+    {
+      "name": "nameOrig",
+      "type": "string",
+      "doc": "Customer initiating the transaction (partition key)."
+    },
+    {
+      "name": "oldbalanceOrg",
+      "type": "double",
+      "doc": "Initial sender balance before transaction."
+    },
+    {
+      "name": "newbalanceOrig",
+      "type": "double",
+      "doc": "New sender balance after transaction."
+    },
+    {
+      "name": "nameDest",
+      "type": "string",
+      "doc": "Customer receiving the transaction."
+    },
+    {
+      "name": "oldbalanceDest",
+      "type": "double",
+      "doc": "Initial recipient balance before transaction."
+    },
+    {
+      "name": "newbalanceDest",
+      "type": "double",
+      "doc": "New recipient balance after transaction."
+    },
+    {
+      "name": "isFraud",
+      "type": ["null", "int"],
+      "default": null,
+      "doc": "Ground truth fraud label (1=fraud, 0=legit). Null in production streams."
+    },
+    {
+      "name": "isFlaggedFraud",
+      "type": ["null", "int"],
+      "default": null,
+      "doc": "Legacy rule-based flag (1=flagged). Null in production streams."
+    }
+  ]
+}
