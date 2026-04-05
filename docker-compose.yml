@@ -1,0 +1,232 @@
+networks:
+  fraudpulse_net:
+    driver: bridge
+
+volumes:
+  mongo_data:
+  spark_checkpoints:
+
+
+services:
+
+  # ─────────────────────────────────────────────
+  # ZOOKEEPER
+  # ─────────────────────────────────────────────
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.3
+    container_name: zookeeper
+    restart: unless-stopped
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - fraudpulse_net
+    healthcheck:
+      test: [ "CMD-SHELL", "echo srvr | nc localhost 2181 || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  # ─────────────────────────────────────────────
+  # KAFKA
+  # ─────────────────────────────────────────────
+  kafka:
+    image: confluentinc/cp-kafka:7.5.3
+    container_name: kafka
+    restart: unless-stopped
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_LOG_RETENTION_HOURS: 48
+    networks:
+      - fraudpulse_net
+    healthcheck:
+      test: [ "CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092" ]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 40s
+
+  # ─────────────────────────────────────────────
+  # KAFKA TOPIC INIT
+  # ─────────────────────────────────────────────
+  kafka-init:
+    image: confluentinc/cp-kafka:7.5.3
+    container_name: kafka-init
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - fraudpulse_net
+    entrypoint: [ "/bin/sh", "-c" ]
+    command: |
+      "
+      kafka-topics --bootstrap-server kafka:29092 --list
+      echo 'Creating kafka topic fraud-transactions...'
+      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic fraud-transactions --partitions 3 --replication-factor 1
+      echo 'Topic created successfully.'
+      kafka-topics --bootstrap-server kafka:29092 --describe --topic fraud-transactions
+      "
+    restart: on-failure
+
+  # ─────────────────────────────────────────────
+  # MONGODB
+  # ─────────────────────────────────────────────
+  mongodb:
+    image: mongo:6.0.12
+    container_name: mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+      - ./scripts/init_mongo.js:/docker-entrypoint-initdb.d/init.js:ro
+    networks:
+      - fraudpulse_net
+    healthcheck:
+      test: [ "CMD", "mongosh", "--eval", "db.adminCommand('ping')" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 25s
+
+  # ─────────────────────────────────────────────
+  # SPARK MASTER
+  # ─────────────────────────────────────────────
+  spark-master:
+    image: apache/spark:3.5.3
+    container_name: spark-master
+    restart: unless-stopped
+    user: root
+    entrypoint: [ "/opt/spark/bin/spark-class" ]
+    command: [ "org.apache.spark.deploy.master.Master" ]
+    environment:
+      - SPARK_MASTER_HOST=spark-master
+      - SPARK_MASTER_PORT=7077
+      - SPARK_MASTER_WEBUI_PORT=8080
+    ports:
+      - "8080:8080"
+      - "7077:7077"
+    networks:
+      - fraudpulse_net
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8080 || exit 1" ]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  # ─────────────────────────────────────────────
+  # SPARK WORKER
+  # ─────────────────────────────────────────────
+  spark-worker:
+    image: apache/spark:3.5.3
+    container_name: spark-worker
+    restart: unless-stopped
+    user: root
+    entrypoint: [ "/opt/spark/bin/spark-class" ]
+    command: [ "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077" ]
+    environment:
+      - SPARK_WORKER_MEMORY=2g
+      - SPARK_WORKER_CORES=2
+    depends_on:
+      spark-master:
+        condition: service_healthy
+    networks:
+      - fraudpulse_net
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://spark-master:8080 || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  # ─────────────────────────────────────────────
+  # SPARK CONSUMER
+  # ─────────────────────────────────────────────
+  spark-consumer:
+    build:
+      context: ./src/spark
+    container_name: spark-consumer
+    restart: on-failure
+    user: root
+    depends_on:
+      kafka:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      spark-master:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+    environment:
+      - KAFKA_BROKER=kafka:29092
+      - KAFKA_TOPIC=fraud-transactions
+      - MONGO_URI=mongodb://mongodb:27017/
+      - MONGO_DB=fraud_db
+      - MONGO_COLLECTION=transactions
+      - FRAUD_THRESHOLD=0.5
+      - SPARK_CHECKPOINT_DIR=/tmp/checkpoints
+    volumes:
+      - ./models:/app/models:ro
+      - spark_checkpoints:/tmp/checkpoints
+    networks:
+      - fraudpulse_net
+    command: >
+      /opt/spark/bin/spark-submit --master spark://spark-master:7077 --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.3,org.mongodb.spark:mongo-spark-connector_2.12:10.6.1,ml.dmlc:xgboost4j_2.12:2.0.3,com.fasterxml.jackson.module:jackson-module-scala_2.12:2.15.2 --conf "spark.sql.streaming.checkpointLocation=/tmp/checkpoints" --conf "spark.driver.extraJavaOptions=-Divy.cache.dir=/tmp/.ivy2 -Divy.home=/tmp/.ivy2" /app/fraudpulse_2.12-1.0.jar
+
+  # ─────────────────────────────────────────────
+  # PRODUCER
+  # ─────────────────────────────────────────────
+  producer:
+    build:
+      context: ./src/producer
+    container_name: producer
+    restart: on-failure
+    depends_on:
+      kafka:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+    environment:
+      - KAFKA_BROKER=kafka:29092
+      - KAFKA_TOPIC=fraud-transactions
+      - STREAM_DELAY_SECONDS=0.1
+    volumes:
+      - ./data/paysim.csv:/app/paysim.csv:ro
+    networks:
+      - fraudpulse_net
+
+  # ─────────────────────────────────────────────
+  # DASHBOARD
+  # ─────────────────────────────────────────────
+  dashboard:
+    build:
+      context: ./src/dashboard
+    container_name: dashboard
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    ports:
+      - "8501:8501"
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/
+      - MONGO_DB=fraud_db
+      - MONGO_COLLECTION=transactions
+    networks:
+      - fraudpulse_net

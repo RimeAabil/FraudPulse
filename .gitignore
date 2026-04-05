@@ -1,0 +1,18 @@
+.env
+__pycache__/
+*.pyc
+
+# Markdown files (except README and EXECUTIVE_SUMMARY)
+ARCHITECTURE_DIAGRAMS.md
+KAFKA_AND_DOCKER_ARCHITECTURE.md
+PRESENTATION_GUIDE.md
+PRESENTATION_TECHNIQUE_JURY_FRANCAIS.md
+SCRIPTS_DETAILED_EXPLANATION.md
+
+# Data & Models
+data/paysim.csv
+*.csv
+models/*.pkl
+
+# Checkpoints
+checkpoints/

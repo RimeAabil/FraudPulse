@@ -1,0 +1,1 @@
+{"feature_cols": ["amount", "oldbalanceOrg", "newbalanceOrig", "oldbalanceDest", "newbalanceDest", "balance_drained", "dest_balance_unchanged", "amount_to_balance_ratio", "hour_of_day", "is_transfer_or_cashout", "type_encoded"], "type_mapping": {"PAYMENT": 0, "TRANSFER": 1, "CASH_OUT": 2, "DEBIT": 3, "CASH_IN": 4}}
