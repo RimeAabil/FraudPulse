@@ -7,6 +7,9 @@ FraudPulse is a robust, fault-tolerant data engineering pipeline designed to det
 
 ---
 
+![Architecture](./FraudPulse.png)
+---
+
 ## Quick Start: Launching the Project
 
 To immediately launch the streaming pipeline in a local environment, follow these three execution steps:
