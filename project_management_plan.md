@@ -64,40 +64,34 @@ The WBS is a hierarchical decomposition of the project architecture into managea
 ## 3. Gantt Chart (4-Week Timeline)
 
 The following ASCII representation visualizes the sequential and parallel overlapping of tasks across a standard 4-week delivery timeframe.
+```mermaid
+gantt
+  title Real-Time Fraud Detection Platform
+  dateFormat  YYYY-MM-DD
+  axisFormat  W%W
 
-```text
-Project Timeline: Real-Time Fraud Detection Platform
-[=] = 1 Day | Week = 5 Working Days
+  section Infrastructure (Rime)
+  INF-1 Kafka Docker        :inf1, 2024-01-01, 3d
+  INF-2 Spark Env           :inf2, 2024-01-01, 1d
 
-W1 = Sprint 1, Week 1
-W2 = Sprint 1, Week 2
-W3 = Sprint 2, Week 1
-W4 = Sprint 2, Week 2
+  section Ingestion (Rime)
+  ING-1 Kafka Producer      :ing1, after inf1, 7d
 
-W1.1  W1.3  W1.5  W2.2  W2.4  W3.1  W3.3  W3.5  W4.2  W4.4
-|-----------|-----------|-----------|-----------|-----------|
-[ INF-1: Kafka Docker ] (Rime)
-[=======]
-            [ ING-1: Kafka Producer   ] (Rime)
-            [===============]
-[ ML-1: EDA & Baseline   ] (Niama)
-[===================]
-                    [ ML-2: Model Training & Serialization ] (Niama)
-                    [=======================]
-[ INF-2: Spark Env ] (Mohamed)
-[====]
-            [ PRC-1: Spark <> Kafka   ] (Mohamed)
-            [=======]
-                    [ PRC-2: Transform & Clean     ] (Mohamed)
-                    [===================]
-[ INF-3: Mongo ] 
-[====]
-                                [ INT-1: Spark ML Integration    ] (Mohamed/Niama)
-                                [==================]
-                                            [ STO-1: Spark <> Mongo ] (Niama)
-                                            [==========]
-                                                        [ SYS-1: E2E Testing ] (ALL)
-                                                        [====================]
+  section Processing (Mohamed)
+  INF-3 Mongo               :inf3, 2024-01-01, 1d
+  PRC-1 Spark <> Kafka      :prc1, after inf1, 3d
+  PRC-2 Transform & Clean   :prc2, after prc1, 9d
+
+  section Machine Learning (Niama)
+  ML-1 EDA & Baseline       :ml1, 2024-01-01, 9d
+  ML-2 Model Training       :ml2, after ml1, 11d
+
+  section Integration
+  INT-1 Spark ML Integration :int1, after prc2, 9d
+  STO-1 Spark <> Mongo      :sto1, after int1, 5d
+
+  section Testing (ALL)
+  SYS-1 E2E Testing         :sys1, after sto1, 10d
 ```
 
 ---
