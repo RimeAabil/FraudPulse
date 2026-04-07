@@ -1,0 +1,553 @@
+<style>
+  :root {
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --border-radius-lg: 12px;
+    --border-radius-md: 8px;
+    --color-background-primary: #ffffff;
+    --color-background-secondary: #f8fafc;
+    --color-text-primary: #1e293b;
+    --color-text-secondary: #64748b;
+    --color-text-tertiary: #94a3b8;
+    --color-border-secondary: #e2e8f0;
+    --color-border-tertiary: #f1f5f9;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    min-height: 100vh;
+    padding: 2rem 1rem;
+    display: flex;
+    justify-content: center;
+  }
+
+  /* Centered Container */
+  .board-container {
+    width: 100%;
+    max-width: 1200px;
+    /* Limits width on large screens */
+    margin: 0 auto;
+  }
+
+  .board {
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(10px);
+    padding: 2rem;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+  }
+
+  .board-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 2rem;
+  }
+
+  .board-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin-bottom: 8px;
+    letter-spacing: -0.02em;
+  }
+
+  .members {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .member-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    padding: 5px 12px;
+    border-radius: 30px;
+    border: 1px solid var(--color-border-secondary);
+    background: var(--color-background-primary);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  }
+
+  .member-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  .filters {
+    display: flex;
+    gap: 8px;
+    background: #fff;
+    padding: 4px;
+    border-radius: 12px;
+    border: 1px solid var(--color-border-secondary);
+  }
+
+  .fbtn {
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 16px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all .2s;
+  }
+
+  .fbtn:hover {
+    background: #f1f5f9;
+    color: var(--color-text-primary);
+  }
+
+  .fbtn.active {
+    color: #fff;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+
+  .fbtn[data-m="all"].active {
+    background: #64748b;
+  }
+
+  .fbtn[data-m="rime"].active {
+    background: #10b981;
+  }
+
+  .fbtn[data-m="mohamed"].active {
+    background: #6366f1;
+  }
+
+  .fbtn[data-m="niama"].active {
+    background: #3b82f6;
+  }
+
+  .columns {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+    align-items: flex-start;
+  }
+
+  .col {
+    background: #f8fafc;
+    border-radius: var(--border-radius-lg);
+    border: 1px solid var(--color-border-secondary);
+    display: flex;
+    flex-direction: column;
+    max-height: 80vh;
+  }
+
+  .col-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.5);
+    border-bottom: 1px solid var(--color-border-secondary);
+  }
+
+  .col-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .col-count {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 20px;
+    background: #fff;
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border-secondary);
+  }
+
+  .cards {
+    padding: 12px;
+    overflow-y: auto;
+  }
+
+  .card {
+    background: var(--color-background-primary);
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--color-border-secondary);
+    padding: 16px;
+    margin-bottom: 12px;
+    transition: all .2s ease;
+    position: relative;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+  }
+
+  .card:hover {
+    border-color: #cbd5e1;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    border-radius: 4px 0 0 4px;
+  }
+
+  .card.hidden {
+    display: none;
+  }
+
+  .card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    font-size: 9px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 1px var(--color-border-secondary);
+  }
+
+  .card-title {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.5;
+    color: var(--color-text-primary);
+    margin-bottom: 16px;
+  }
+
+  .card-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 12px;
+    border-top: 1px solid var(--color-border-tertiary);
+  }
+
+  .tag {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-text-tertiary);
+    font-family: var(--font-mono);
+  }
+
+  /* Category Colors */
+  .chip {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 6px;
+    text-transform: uppercase;
+  }
+
+  .av-rime,
+  .fbtn[data-m="rime"].active {
+    background: #10b981;
+  }
+
+  .av-mohamed,
+  .fbtn[data-m="mohamed"].active {
+    background: #6366f1;
+  }
+
+  .av-niama,
+  .fbtn[data-m="niama"].active {
+    background: #3b82f6;
+  }
+
+  .chip-kafka {
+    background: #ecfdf5;
+    color: #059669;
+  }
+
+  .card.m-kafka::before {
+    background: #10b981;
+  }
+
+  .chip-spark {
+    background: #eef2ff;
+    color: #4f46e5;
+  }
+
+  .card.m-spark::before {
+    background: #6366f1;
+  }
+
+  .chip-ml {
+    background: #eff6ff;
+    color: #2563eb;
+  }
+
+  .card.m-ml::before {
+    background: #3b82f6;
+  }
+
+  .chip-infra {
+    background: #f8fafc;
+    color: #475569;
+  }
+
+  .card.m-infra::before {
+    background: #64748b;
+  }
+
+  .chip-obs {
+    background: #fff1f2;
+    color: #e11d48;
+  }
+
+  .card.m-obs::before {
+    background: #e11d48;
+  }
+
+  .chip-mlops {
+    background: #fff7ed;
+    color: #d97706;
+  }
+
+  .card.m-mlops::before {
+    background: #d97706;
+  }
+
+  .chip-mongo {
+    background: #f0fdf4;
+    color: #16a34a;
+  }
+
+  .card.m-mongo::before {
+    background: #16a34a;
+  }
+
+  .chip-dashboard {
+    background: #faf5ff;
+    color: #9333ea;
+  }
+
+  .card.m-dashboard::before {
+    background: #9333ea;
+  }
+</style>
+
+<div class="board-container">
+  <div class="board">
+    <div class="board-top">
+      <div>
+        <div class="board-title">FraudPulse — Project Board</div>
+        <div class="members">
+          <div class="member-pill">
+            <div class="member-dot" style="background:#10b981"></div>Rime
+          </div>
+          <div class="member-pill">
+            <div class="member-dot" style="background:#6366f1"></div>Mohamed
+          </div>
+          <div class="member-pill">
+            <div class="member-dot" style="background:#3b82f6"></div>Niama
+          </div>
+        </div>
+      </div>
+      <div class="filters">
+        <button class="fbtn active" data-m="all" onclick="doFilter('all')">All Tasks</button>
+        <button class="fbtn" data-m="rime" onclick="doFilter('rime')">Rime</button>
+        <button class="fbtn" data-m="mohamed" onclick="doFilter('mohamed')">Mohamed</button>
+        <button class="fbtn" data-m="niama" onclick="doFilter('niama')">Niama</button>
+      </div>
+    </div>
+
+    <div class="columns">
+      <div class="col">
+        <div class="col-head">
+          <div class="col-label"><span class="col-dot" style="background:#94a3b8"></span>To Do</div>
+          <span class="col-count" id="cnt-todo">0</span>
+        </div>
+        <div class="cards" id="col-todo">
+          <div class="card m-obs" data-m="rime">
+            <div class="card-top"><span class="chip chip-obs">Observabilité</span>
+              <div class="avatar av-rime">RI</div>
+            </div>
+            <div class="card-title">Configurer ELK Stack (Logstash, Elasticsearch, Kibana)</div>
+            <div class="card-foot"><span class="tag">#elk</span></div>
+          </div>
+          <div class="card m-kafka" data-m="rime">
+            <div class="card-top"><span class="chip chip-kafka">Kafka</span>
+              <div class="avatar av-rime">RI</div>
+            </div>
+            <div class="card-title">Migrer vers mode KRaft (supprimer ZooKeeper)</div>
+            <div class="card-foot"><span class="tag">#kafka-kraft</span></div>
+          </div>
+          <div class="card m-kafka" data-m="rime">
+            <div class="card-top"><span class="chip chip-kafka">Kafka</span>
+              <div class="avatar av-rime">RI</div>
+            </div>
+            <div class="card-title">Configurer Dead Letter Queue (fraud-transactions-dlq)</div>
+            <div class="card-foot"><span class="tag">#dlq</span></div>
+          </div>
+          <div class="card m-obs" data-m="rime">
+            <div class="card-top"><span class="chip chip-obs">Observabilité</span>
+              <div class="avatar av-rime">RI</div>
+            </div>
+            <div class="card-title">Exposer métriques Producer via prometheus_client (:8001)</div>
+            <div class="card-foot"><span class="tag">#prometheus</span></div>
+          </div>
+          <div class="card m-spark" data-m="mohamed">
+            <div class="card-top"><span class="chip chip-spark">Spark</span>
+              <div class="avatar av-mohamed">MO</div>
+            </div>
+            <div class="card-title">Implémenter DLQHandler.scala pour messages malformés</div>
+            <div class="card-foot"><span class="tag">#dlq-handler</span></div>
+          </div>
+          <div class="card m-spark" data-m="mohamed">
+            <div class="card-top"><span class="chip chip-spark">Spark</span>
+              <div class="avatar av-mohamed">MO</div>
+            </div>
+            <div class="card-title">Implémenter MetricsReporter.scala → Pushgateway</div>
+            <div class="card-foot"><span class="tag">#metrics</span></div>
+          </div>
+          <div class="card m-obs" data-m="mohamed">
+            <div class="card-top"><span class="chip chip-obs">Observabilité</span>
+              <div class="avatar av-mohamed">MO</div>
+            </div>
+            <div class="card-title">Configurer Prometheus + Grafana dashboards</div>
+            <div class="card-foot"><span class="tag">#grafana</span></div>
+          </div>
+          <div class="card m-mlops" data-m="niama">
+            <div class="card-top"><span class="chip chip-mlops">MLOps</span>
+              <div class="avatar av-niama">NI</div>
+            </div>
+            <div class="card-title">Intégrer MLflow pour tracking et versioning du modèle</div>
+            <div class="card-foot"><span class="tag">#mlflow</span></div>
+          </div>
+          <div class="card m-mlops" data-m="niama">
+            <div class="card-top"><span class="chip chip-mlops">MLOps</span>
+              <div class="avatar av-niama">NI</div>
+            </div>
+            <div class="card-title">Implémenter drift_detector.py (Evidently AI)</div>
+            <div class="card-foot"><span class="tag">#drift</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="col-head">
+          <div class="col-label"><span class="col-dot" style="background:#3b82f6"></span>In Progress</div>
+          <span class="col-count" id="cnt-inprogress">0</span>
+        </div>
+        <div class="cards" id="col-inprogress">
+          <div class="card m-kafka" data-m="rime">
+            <div class="card-top"><span class="chip chip-kafka">Kafka</span>
+              <div class="avatar av-rime">RI</div>
+            </div>
+            <div class="card-title">Scaler à 3 brokers KRaft pour haute disponibilité</div>
+            <div class="card-foot"><span class="tag">#cluster</span></div>
+          </div>
+          <div class="card m-kafka" data-m="rime">
+            <div class="card-top"><span class="chip chip-kafka">Kafka</span>
+              <div class="avatar av-rime">RI</div>
+            </div>
+            <div class="card-title">Activer idempotence + compression lz4 sur le Producer</div>
+            <div class="card-foot"><span class="tag">#exactly-once</span></div>
+          </div>
+          <div class="card m-spark" data-m="mohamed">
+            <div class="card-top"><span class="chip chip-spark">Spark</span>
+              <div class="avatar av-mohamed">MO</div>
+            </div>
+            <div class="card-title">Ajouter watermark (10 min) et fenêtres temporelles 5 min</div>
+            <div class="card-foot"><span class="tag">#windowing</span></div>
+          </div>
+          <div class="card m-mlops" data-m="niama">
+            <div class="card-top"><span class="chip chip-mlops">MLOps</span>
+              <div class="avatar av-niama">NI</div>
+            </div>
+            <div class="card-title">Intégrer evaluate.py et pipeline de comparaison de modèles</div>
+            <div class="card-foot"><span class="tag">#eval</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="col-head">
+          <div class="col-label"><span class="col-dot" style="background:#10b981"></span>Done</div>
+          <span class="col-count" id="cnt-done">0</span>
+        </div>
+        <div class="cards" id="col-done">
+          <div class="card m-infra" data-m="rime">
+            <div class="card-top"><span class="chip chip-infra">Infrastructure</span>
+              <div class="avatar av-rime">RI</div>
+            </div>
+            <div class="card-title">Configurer docker-compose.yml principal (Kafka, Mongo, Spark)</div>
+            <div class="card-foot"><span class="tag">#docker</span></div>
+          </div>
+          <div class="card m-kafka" data-m="rime">
+            <div class="card-top"><span class="chip chip-kafka">Kafka</span>
+              <div class="avatar av-rime">RI</div>
+            </div>
+            <div class="card-title">Créer producer.py : lecture PaySim CSV → Kafka JSON</div>
+            <div class="card-foot"><span class="tag">#producer</span></div>
+          </div>
+          <div class="card m-spark" data-m="mohamed">
+            <div class="card-top"><span class="chip chip-spark">Spark</span>
+              <div class="avatar av-mohamed">MO</div>
+            </div>
+            <div class="card-title">Implémenter FraudPulseStream.scala (Kafka → ML → MongoDB)</div>
+            <div class="card-foot"><span class="tag">#streaming</span></div>
+          </div>
+          <div class="card m-ml" data-m="niama">
+            <div class="card-top"><span class="chip chip-ml">ML</span>
+              <div class="avatar av-niama">NI</div>
+            </div>
+            <div class="card-title">Implémenter train.py : feature engineering + XGBoost</div>
+            <div class="card-foot"><span class="tag">#xgboost</span></div>
+          </div>
+          <div class="card m-dashboard" data-m="niama">
+            <div class="card-top"><span class="chip chip-dashboard">Dashboard</span>
+              <div class="avatar av-niama">NI</div>
+            </div>
+            <div class="card-title">Créer dashboard.py Streamlit</div>
+            <div class="card-foot"><span class="tag">#streamlit</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function countCards() {
+    ['todo', 'inprogress', 'done'].forEach(id => {
+      const n = document.querySelectorAll('#col-' + id + ' .card:not(.hidden)').length;
+      const el = document.getElementById('cnt-' + id);
+      if (el) el.textContent = n;
+    });
+  }
+  function doFilter(m) {
+    document.querySelectorAll('.fbtn').forEach(b => b.classList.remove('active'));
+    document.querySelector('[data-m="' + m + '"]').classList.add('active');
+    document.querySelectorAll('.card').forEach(c => {
+      c.classList.toggle('hidden', m !== 'all' && c.dataset.m !== m);
+    });
+    countCards();
+  }
+  countCards();
+</script>
