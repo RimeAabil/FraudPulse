@@ -66,33 +66,36 @@ The WBS is a hierarchical decomposition of the project architecture into managea
 The following ASCII representation visualizes the sequential and parallel overlapping of tasks across a standard 4-week delivery timeframe.
 ```mermaid
 gantt
-  title Real-Time Fraud Detection Platform
-  dateFormat  YYYY-MM-DD
-  axisFormat  W%W
+    title Real-Time Fraud Detection Platform - 4 Week Sprint Plan
+    dateFormat  YYYY-MM-DD
+    axisFormat  Week %W
+    tickInterval 1week
+    todayMarker off
 
-  section Infrastructure (Rime)
-  INF-1 Kafka Docker        :inf1, 2024-01-01, 3d
-  INF-2 Spark Env           :inf2, 2024-01-01, 1d
+    section Infrastructure (Rime)
+    INF-1 Docker Kafka :done, inf1, 2026-03-01, 5d
+    INF-2 Spark Env    :done, inf2, 2026-03-01, 5d
+    INF-3 Mongo Prov.  :done, inf3, 2026-03-01, 5d
 
-  section Ingestion (Rime)
-  ING-1 Kafka Producer      :ing1, after inf1, 7d
+    section Ingestion (Rime)
+    ING-1 Kafka Prod.  :active, ing1, after inf1, 8d
 
-  section Processing (Mohamed)
-  INF-3 Mongo               :inf3, 2024-01-01, 1d
-  PRC-1 Spark <> Kafka      :prc1, after inf1, 3d
-  PRC-2 Transform & Clean   :prc2, after prc1, 9d
+    section Processing (Mohamed)
+    PRC-1 Spark Ingest :active, prc1, after inf2, 6d
+    PRC-2 Transform DB :prc2, after prc1, 9d
 
-  section Machine Learning (Niama)
-  ML-1 EDA & Baseline       :ml1, 2024-01-01, 9d
-  ML-2 Model Training       :ml2, after ml1, 11d
+    section Intelligence (Niama)
+    ML-1 Histor. EDA   :active, ml1, 2024-01-01, 8d
+    ML-2 Train Model   :ml2, after ml1, 12d
 
-  section Integration
-  INT-1 Spark ML Integration :int1, after prc2, 9d
-  STO-1 Spark <> Mongo      :sto1, after int1, 5d
+    section Integration (Shared)
+    INT-1 ML<=>Spark   :crit, int1, after prc2, 6d
+    STO-1 Spark<=>Mongo:sto1, after prc1, 6d
 
-  section Testing (ALL)
-  SYS-1 E2E Testing         :sys1, after sto1, 10d
+    section System (ALL)
+    SYS-1 E2E Testing  :crit, sys1, after int1, 6d
 ```
+
 
 ---
 
