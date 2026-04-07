@@ -66,9 +66,9 @@ The WBS is a hierarchical decomposition of the project architecture into managea
 The following ASCII representation visualizes the sequential and parallel overlapping of tasks across a standard 4-week delivery timeframe.
 ```mermaid
 gantt
-    title Real-Time Fraud Detection Platform - 4 Week Sprint Plan
+    title Real-Time Fraud Detection Platform - 1 Month Sprint Plan
     dateFormat  YYYY-MM-DD
-    axisFormat  Week %W
+    axisFormat  %b %d
     tickInterval 1week
     todayMarker off
 
@@ -85,7 +85,7 @@ gantt
     PRC-2 Transform DB :prc2, after prc1, 9d
 
     section Intelligence (Niama)
-    ML-1 Histor. EDA   :active, ml1, 2024-01-01, 8d
+    ML-1 Histor. EDA   :active, ml1, 2026-03-01, 8d
     ML-2 Train Model   :ml2, after ml1, 12d
 
     section Integration (Shared)
@@ -95,7 +95,6 @@ gantt
     section System (ALL)
     SYS-1 E2E Testing  :crit, sys1, after int1, 6d
 ```
-
 
 ---
 
