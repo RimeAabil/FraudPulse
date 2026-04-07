@@ -1,4 +1,4 @@
-# Enterprise Project Management Plan: Real-Time Fraud Detection Platform
+# Project Management Plan: Real-Time Fraud Detection Platform
 
 ## Executive Summary
 This document outlines the comprehensive project management strategy for the Real-Time Fraud Detection pipeline. It adopts an Agile methodology, structuring the work via Kanban boards, sprints, and detailed component ownership. The core architecture integrates standard big data components including **Docker, Apache Kafka, Apache Spark, MongoDB, and Machine Learning**.
