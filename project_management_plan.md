@@ -64,7 +64,7 @@ The WBS is a hierarchical decomposition of the project architecture into managea
 ### **UPDATED KANBAN** 
 
 We use a custom, interactive Kanban board to track project tasks, responsibilities, and progression. You can view the project board by downloading and opening the following file in your web browser:
-- **[FraudPulse Kanban Board](docs/fraudpulse_kanban.html)** 
+- **[FraudPulse Kanban Board](./fraudpulse_kanban.html)** 
 *(Note: If viewing directly on GitHub, clicking the link will show the source HTML code. Please download the file or use an HTML preview service to render the interface.)*
 
 
